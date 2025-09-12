@@ -1,0 +1,11 @@
+@import './base.css';
+
+.container {
+  width: 90%;
+  margin: 0 auto;
+}
+
+.h3 {
+  color: white;
+  font-weight: 600;
+}
