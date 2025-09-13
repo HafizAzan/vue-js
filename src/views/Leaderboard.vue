@@ -6,8 +6,12 @@ import Pagination from '@/components/Pagination.vue'
 import Table from '@/components/Table.vue'
 import { fetchLeaderBoardData } from '@/utils/api-service'
 import { headers } from '@/utils/constant'
-import { watchEffect, ref, computed } from 'vue'
+import { ref, computed } from 'vue'
 import { useQuery } from '@tanstack/vue-query'
+import Modal from '@/components/Modal.vue'
+import { useUserStore } from '../store/useUserStore'
+import { useRouter } from 'vue-router'
+import { ROUTES } from '../router'
 
 const items = [
   { level: 1, title: 'Level 1' },
@@ -20,6 +24,8 @@ const items = [
 ]
 
 const currentPage = ref(1)
+const { resetToken } = useUserStore()
+const router = useRouter()
 
 const { data, isLoading, isFetching } = useQuery({
   queryKey: ['leaderboard', currentPage],
@@ -44,6 +50,10 @@ const handleSelect = (item) => {
 }
 
 const gamePlay = (action) => {
+  if (action === 'leave') {
+    resetToken()
+    router.push(ROUTES)
+  }
   console.log('click play next', action)
 }
 </script>
@@ -55,7 +65,18 @@ const gamePlay = (action) => {
 
       <main class="content-btns">
         <Button buttonText="Play" @click="() => gamePlay('play-next')" />
-        <Button buttonText="Leave" @click="() => gamePlay('leave')" />
+        <Modal
+          v-model="open"
+          title="Use Google's location service?"
+          text="Let Google help apps determine location. This means sending anonymous location data to Google, even when no apps are running."
+          prepend-icon="mdi-map-marker"
+          agree-text="Yes"
+          disagree-text="No"
+          @agree="() => gamePlay('leave')"
+          @disagree="console.log('Disagreed!')"
+          button-text="Leave"
+        >
+        </Modal>
         <DropDownVue
           :items="items"
           buttonText="Filter Levels"

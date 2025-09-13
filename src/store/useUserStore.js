@@ -14,6 +14,10 @@ export const useUserStore = defineStore('user', {
     setToken(value) {
       this.token = value
     },
+
+    resetToken() {
+      this.token = null
+    },
   },
 
   persist: true,

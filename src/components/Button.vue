@@ -1,6 +1,5 @@
 <script setup>
 import { useAttrs } from 'vue'
-import Loader from './Loader.vue'
 
 const emit = defineEmits(['click'])
 const attr = useAttrs()

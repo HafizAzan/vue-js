@@ -5,10 +5,12 @@ import { useUserStore } from '@/store/useUserStore'
 import { loginUser, RegisterUser } from '@/utils/api-service'
 import { useMutation } from '@tanstack/vue-query'
 import { computed, reactive, watch } from 'vue'
-import { RouterLink, useRoute } from 'vue-router'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
+import { ROUTES } from '../router'
 
 const route = useRoute()
+const router = useRouter()
 const { setToken } = useUserStore()
 const isLogin = computed(() => route.path === '/login')
 
@@ -52,6 +54,7 @@ const handleSubmit = async () => {
     if (!res?.error) {
       toast.success('Logged in user sucessfully!')
       setToken(res?.token)
+      router.push(ROUTES.LEADERBOARD)
     } else {
       toast.error(res?.error || res?.error?.message || 'Failed To Submit')
     }
@@ -65,6 +68,7 @@ const handleSubmit = async () => {
     if (!res?.error) {
       toast.success('User regestered sucessfully!')
       setToken(res?.token)
+      router.push(ROUTES.LEADERBOARD)
     } else {
       toast.error(res?.error || res?.error?.message || 'Failed To Submit')
     }
@@ -154,6 +158,7 @@ const handleSubmit = async () => {
   flex-flow: column wrap;
   gap: 20px;
   border-radius: 10px;
+  border: 1px solid orange;
 }
 
 .form-text {
