@@ -72,17 +72,13 @@ const handleDisagree = () => {
     </template>
 
     <v-card class="modal-card" :title="title" :prepend-icon="prependIcon">
-      <v-card-text v-if="text">
-        <span>{{ text }}</span>
-      </v-card-text>
-      <v-card-text v-else>
+      <v-card-text>
         <slot />
       </v-card-text>
 
-      <!-- ✅ Wrap actions inside v-card-actions manually -->
       <v-card-actions class="modal-actions" v-if="showActions">
-        <v-btn @click="handleDisagree">{{ disagreeText }}</v-btn>
-        <v-btn @click="handleAgree">{{ agreeText }}</v-btn>
+        <Button @click="handleDisagree" :button-text="disagreeText" class="disagree-btn" />
+        <Button @click="handleAgree" :button-text="agreeText" />
       </v-card-actions>
     </v-card>
   </v-dialog>
@@ -98,12 +94,19 @@ const handleDisagree = () => {
   color: white;
   border: 1px solid orangered;
   border-radius: 5px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
-/* ✅ Now we can target this class directly */
 .modal-actions {
   display: flex;
   justify-content: center !important;
   gap: 12px;
+}
+
+.disagree-btn {
+  background-color: transparent !important;
+  border: 1px solid white;
 }
 </style>

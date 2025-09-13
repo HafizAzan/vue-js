@@ -12,6 +12,7 @@ import Modal from '@/components/Modal.vue'
 import { useUserStore } from '../store/useUserStore'
 import { useRouter } from 'vue-router'
 import { ROUTES } from '../router'
+import { toast } from 'vue-sonner'
 
 const items = [
   { level: 1, title: 'Level 1' },
@@ -52,7 +53,8 @@ const handleSelect = (item) => {
 const gamePlay = (action) => {
   if (action === 'leave') {
     resetToken()
-    router.push(ROUTES)
+    router.push(ROUTES.LOGIN)
+    toast.success('You Logout Successfully!')
   }
   console.log('click play next', action)
 }
@@ -67,15 +69,19 @@ const gamePlay = (action) => {
         <Button buttonText="Play" @click="() => gamePlay('play-next')" />
         <Modal
           v-model="open"
-          title="Use Google's location service?"
-          text="Let Google help apps determine location. This means sending anonymous location data to Google, even when no apps are running."
-          prepend-icon="mdi-map-marker"
+          title="Are You Sure? You Want To Logout!"
+          prepend-icon="mdi-alert-circle"
           agree-text="Yes"
           disagree-text="No"
           @agree="() => gamePlay('leave')"
           @disagree="console.log('Disagreed!')"
           button-text="Leave"
+          max-width="450"
         >
+          <p class="text-gray-700 text-center">
+            Logging out will end your current session and you may lose unsaved progress. Do you
+            still want to log out?
+          </p>
         </Modal>
         <DropDownVue
           :items="items"
