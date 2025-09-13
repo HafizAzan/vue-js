@@ -45,7 +45,7 @@ function handleClick(event) {
   >
     <v-icon v-if="prependIcon && !isLoading" class="mr-2">{{ prependIcon }}</v-icon>
     <slot>{{ buttonText }}</slot>
-    <Loader v-if="isLoading" size="20" />
+    <v-progress-circular v-if="isLoading" indeterminate size="20" color="white" class="ml-2" />
     <v-icon v-if="appendIcon && !isLoading" class="ml-2">{{ appendIcon }}</v-icon>
   </v-btn>
 </template>

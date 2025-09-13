@@ -40,6 +40,7 @@ const showPassword = ref(false)
 watch(
   () => props.modelValue,
   (val) => (inputValue.value = val),
+  { immediate: true },
 )
 
 watch(inputValue, (val) => {
@@ -67,7 +68,6 @@ const togglePassword = () => {
 <template>
   <v-text-field
     class="input-field"
-    v-model="inputValue"
     :label="label"
     :type="inputType"
     :rules="computedRules"
@@ -77,6 +77,8 @@ const togglePassword = () => {
     hide-details="auto"
     :append-inner-icon="props.type === 'password' ? (showPassword ? 'mdi-eye-off' : 'mdi-eye') : ''"
     @click:append-inner="props.type === 'password' && togglePassword()"
+    :model-value="props.modelValue"
+    @update:model-value="emit('update:modelValue', $event)"
   />
 </template>
 

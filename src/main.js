@@ -11,6 +11,8 @@ import '@mdi/font/css/materialdesignicons.css'
 import { aliases, mdi } from 'vuetify/iconsets/mdi'
 import { createPinia } from 'pinia'
 import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'
+import { Toaster } from 'vue-sonner'
+import 'vue-sonner/style.css'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -43,4 +45,5 @@ app.use(router)
 app.use(vuetify)
 app.use(pinia)
 pinia.use(piniaPluginPersistedstate)
+app.component('Toaster', Toaster)
 app.mount('#app')

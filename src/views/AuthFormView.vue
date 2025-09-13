@@ -4,8 +4,9 @@ import Input from '@/components/Input.vue'
 import { useUserStore } from '@/store/useUserStore'
 import { loginUser, RegisterUser } from '@/utils/api-service'
 import { useMutation } from '@tanstack/vue-query'
-import { computed, reactive } from 'vue'
+import { computed, reactive, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
+import { toast } from 'vue-sonner'
 
 const route = useRoute()
 const { setToken } = useUserStore()
@@ -25,24 +26,48 @@ const form = reactive({
   password: '',
 })
 
+watch(
+  () => route.path,
+  () => {
+    form.username = ''
+    form.email = ''
+    form.password = ''
+  },
+  { immediate: true },
+)
+
 const handleSubmit = async () => {
+  if (form.username === '' || form.password === '') {
+    toast.error('Please fill all fields!')
+    return
+  }
+
   if (isLogin.value) {
     const payload = {
       userName: form.username,
       password: form.password,
     }
+
     const res = await login(payload)
-    setToken(res?.token)
-    console.log('res ', res)
+    if (!res?.error) {
+      toast.success('Logged in user sucessfully!')
+      setToken(res?.token)
+    } else {
+      toast.error(res?.error || res?.error?.message || 'Failed To Submit')
+    }
   } else {
     const payload = {
       userName: form.username,
-      email: form.email,
+      ...(form.email && { email: form.email }),
       password: form.password,
     }
     const res = await register(payload)
-    setToken(res?.token)
-    console.log('reg', res)
+    if (!res?.error) {
+      toast.success('User regestered sucessfully!')
+      setToken(res?.token)
+    } else {
+      toast.error(res?.error || res?.error?.message || 'Failed To Submit')
+    }
   }
 
   form.username = ''
@@ -50,7 +75,6 @@ const handleSubmit = async () => {
   form.password = ''
 }
 </script>
-
 <template>
   <v-sheet class="main-form-wrapper" width="600" height="700">
     <v-form fast-fail @submit.prevent="handleSubmit" class="auth-form">
@@ -62,9 +86,15 @@ const handleSubmit = async () => {
         >Enter an anonymous username
       </v-typography>
 
-      <Input v-model="form.username" label="Username" type="text" />
-      <Input v-if="!isLogin" v-model="form.email" label="Email" type="email" />
-      <Input v-model="form.password" label="Password" type="password" />
+      <div class="main-input">
+        <Input v-model="form.username" label="Username" type="text" />
+      </div>
+      <div v-if="!isLogin" class="main-input">
+        <Input v-model="form.email" label="Email (Optional)" type="email" />
+      </div>
+      <div class="main-input">
+        <Input v-model="form.password" label="Password" type="password" />
+      </div>
 
       <Button
         type="submit"
@@ -104,6 +134,12 @@ const handleSubmit = async () => {
   display: flex;
   justify-content: center;
   align-items: center;
+}
+
+.main-input {
+  height: 30px;
+  width: 100%;
+  margin-bottom: 25px;
 }
 
 .auth-form {
