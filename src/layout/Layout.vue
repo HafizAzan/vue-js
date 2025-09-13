@@ -6,22 +6,30 @@ import Header from '../components/Header.vue'
 <template>
   <div class="layout">
     <div class="animation-brightness"></div>
-    <Header />
-    <RouterView />
+    <div class="layout-wrapper">
+      <Header />
+      <RouterView />
+    </div>
   </div>
 </template>
 
 <style scoped>
 .layout {
-  height: 100vh;
+  min-height: 100vh;
   width: 100vw;
   background: url('@/assets/images/leaderboard.jpg') no-repeat center center / cover;
   position: relative;
-  overflow: hidden;
+  overflow-x: hidden;
+}
+
+.layout-wrapper {
+  overflow-y: auto;
+  position: relative;
+  z-index: 2;
 }
 
 .animation-brightness {
-  position: absolute;
+  position: fixed;
   top: 0;
   left: 0;
   width: 100%;
@@ -29,11 +37,7 @@ import Header from '../components/Header.vue'
   background: rgba(0, 0, 0, 0.1);
   animation: brightnessAnimation 3s infinite alternate;
   z-index: 1;
-}
-
-.layout > *:not(.animation-brightness) {
-  position: relative;
-  z-index: 2;
+  pointer-events: none;
 }
 
 @keyframes brightnessAnimation {

@@ -1,56 +1,31 @@
 <script setup>
-import { ref } from 'vue'
-import DropDownVue from '@/components/DropDown.vue'
-const items = [{ title: 'Profile' }, { title: 'Settings' }, { title: 'Logout' }]
-const handleSelect = (item) => {
-  console.log('Selected item:', item)
+import Button from '@/components/Button.vue'
+import { useUserStore } from '@/store/useUserStore'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
+const { setIsFirstTime } = useUserStore()
+
+const goToLeaderboard = () => {
+  setIsFirstTime(true)
+  router.push('/signup')
 }
 </script>
 
 <template>
-  <main class="container">
-    <div class="content">
-      <v-typography variants="h3" class="text-h3 h3">Leaderboard</v-typography>
-
-      <main class="content-btns">
-        <v-btn variant="tonal" class="content-btn"> Play Next </v-btn>
-        <DropDownVue
-          :items="items"
-          buttonText="Play Again"
-          defaultLocation="bottom"
-          @select="handleSelect"
-        />
-        <v-btn variant="tonal" class="content-btn"> Leave </v-btn>
-      </main>
-    </div>
+  <main class="main-home-content">
+    <v-typography variants="h2" class="text-h2 h2">Noetic Adventure</v-typography>
+    <Button buttonText="Get Started" @click="goToLeaderboard" appendIcon="mdi-arrow-right" />
   </main>
 </template>
 
 <style scoped>
-.content {
-  padding-top: 6rem;
+.main-home-content {
   display: flex;
-  align-items: start;
-  justify-content: space-between;
-  color: white;
-}
-
-.content-btns {
-  display: flex;
-  flex-direction: row;
-  gap: 1rem;
-  margin-top: 2rem;
-}
-
-.content-btn {
-  background-color: rgb(248, 13, 13);
-  color: white;
-  width: fit-content;
-  height: fit-content !important;
-  padding: 0.8rem;
-  font-size: 1.1rem;
-  border-radius: 0.5rem;
-  font-weight: 700 !important;
-  text-transform: capitalize;
+  align-items: center;
+  justify-content: center;
+  flex-flow: column wrap;
+  gap: 20px;
+  height: 50vh;
 }
 </style>
