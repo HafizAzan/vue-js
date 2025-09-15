@@ -63,7 +63,7 @@ router.beforeEach((to, from, next) => {
   }
 
   if (IsFirstTime && !token) {
-    if (![ROUTES.LOGIN, ROUTES.REGISTER, ROUTES.HOME].includes(to.path)) {
+    if (![ROUTES.LOGIN, ROUTES.REGISTER].includes(to.path)) {
       return next(ROUTES.LOGIN)
     }
     return next()
