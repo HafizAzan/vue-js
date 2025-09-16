@@ -1,9 +1,11 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import Leaderboard from '../views/Leaderboard.vue'
-import AboutView from '../views/AboutView.vue'
+import { useUserStore } from '../store/useUserStore'
+import Leaderboard from '@/views/Leaderboard.vue'
 import HomeView from '@/views/HomeView.vue'
 import AuthFormView from '@/views/AuthFormView.vue'
-import { useUserStore } from '../store/useUserStore'
+import AuthAnswer from '@/views/AuthAnswer.vue'
+import Door from '@/views/Door.vue'
+import FindWord from '@/views/FindWord.vue'
 
 export const ROUTES = {
   HOME: '/',
@@ -11,6 +13,8 @@ export const ROUTES = {
   LOGIN: '/login',
   ANSWERS: '/signup/registeration-answers',
   LEADERBOARD: '/leaderboard',
+  DOOR: '/play/door',
+  FIND_WORD: '/play/find-the-hidden-word',
 }
 
 const routes = [
@@ -29,6 +33,11 @@ const routes = [
         component: AuthFormView,
       },
       {
+        path: ROUTES.ANSWERS,
+        name: 'answers',
+        component: AuthAnswer,
+      },
+      {
         path: ROUTES.LOGIN,
         name: 'login',
         component: AuthFormView,
@@ -39,9 +48,14 @@ const routes = [
         component: Leaderboard,
       },
       {
-        path: '/about',
-        name: 'about',
-        component: AboutView,
+        path: ROUTES.DOOR,
+        name: 'door',
+        component: Door,
+      },
+      {
+        path: ROUTES.FIND_WORD,
+        name: 'findWord',
+        component: FindWord,
       },
     ],
   },
@@ -53,7 +67,7 @@ const router = createRouter({
 })
 
 router.beforeEach((to, from, next) => {
-  const { token, IsFirstTime } = useUserStore()
+  const { token, IsFirstTime, pageName } = useUserStore()
 
   if (!IsFirstTime) {
     if (to.path !== ROUTES.HOME) {
@@ -70,8 +84,12 @@ router.beforeEach((to, from, next) => {
   }
 
   if (IsFirstTime && token) {
-    if (to.path !== ROUTES.LEADERBOARD) {
-      return next(ROUTES.LEADERBOARD)
+    const redirectPath = pageName === 'register' ? ROUTES.ANSWERS : ROUTES.LEADERBOARD
+
+    const allowedRoutes = [redirectPath, ROUTES.DOOR, ROUTES.FIND_WORD]
+
+    if (!allowedRoutes.includes(to.path)) {
+      return next(redirectPath)
     }
     return next()
   }

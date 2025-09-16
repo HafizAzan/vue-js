@@ -5,5 +5,5 @@ import { Toaster } from 'vue-sonner'
 
 <template>
   <RouterView />
-  <Toaster richColors position="top-center" />
+  <Toaster richColors position="top-center" duration="1000" />
 </template>

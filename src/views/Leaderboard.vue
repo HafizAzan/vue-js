@@ -4,59 +4,114 @@ import DropDownVue from '@/components/DropDown.vue'
 import Loader from '@/components/Loader.vue'
 import Pagination from '@/components/Pagination.vue'
 import Table from '@/components/Table.vue'
-import { fetchLeaderBoardData } from '@/utils/api-service'
+import Modal from '@/components/Modal.vue'
+import { fetchLeaderBoardData, fetchLeaderBoardDataByLevel } from '@/utils/api-service'
 import { headers } from '@/utils/constant'
 import { ref, computed } from 'vue'
 import { useQuery } from '@tanstack/vue-query'
-import Modal from '@/components/Modal.vue'
 import { useUserStore } from '../store/useUserStore'
 import { useRouter } from 'vue-router'
 import { ROUTES } from '../router'
 import { toast } from 'vue-sonner'
 
-const items = [
-  { level: 1, title: 'Level 1' },
-  { level: 2, title: 'Level 2' },
-  { level: 3, title: 'Level 3' },
-  { level: 4, title: 'Level 4' },
-  { level: 5, title: 'Level 5' },
-  { level: 6, title: 'Level 6' },
-  { level: 7, title: 'Level 7' },
-]
+const { resetToken, token } = useUserStore()
+const router = useRouter()
 
 const currentPage = ref(1)
-const { resetToken } = useUserStore()
-const router = useRouter()
+const levelPage = ref(1)
+const selectedLevel = ref(null)
+const isLevelFiltered = ref(false)
+const open = ref(false)
 
 const { data, isLoading, isFetching } = useQuery({
   queryKey: ['leaderboard', currentPage],
-  queryFn: () => fetchLeaderBoardData({ page: currentPage.value }),
+  queryFn: () => fetchLeaderBoardData({ page: currentPage.value, userId: token?._id }),
 })
 
-const totalPages = computed(() => data.value?.totalPages || 1)
+const {
+  data: LeaderboardPlayDataById,
+  isLoading: isLevelLoading,
+  isFetching: isFetchingLevel,
+} = useQuery({
+  queryKey: ['leaderboard-play-level', levelPage, selectedLevel],
+  enabled: computed(() => isLevelFiltered.value && selectedLevel.value !== null),
+  queryFn: () =>
+    fetchLeaderBoardDataByLevel({
+      page: levelPage.value,
+      level: selectedLevel.value,
+    }),
+})
 
-const leaderboardItems = computed(() => data.value?.data)
+const page = computed({
+  get: () => (isLevelFiltered.value ? levelPage.value : currentPage.value),
+  set: (val) => {
+    if (isLevelFiltered.value) levelPage.value = val
+    else currentPage.value = val
+  },
+})
+
+const totalPages = computed(() =>
+  isLevelFiltered.value
+    ? LeaderboardPlayDataById.value?.totalPages || 1
+    : data.value?.totalPages || 1,
+)
+
+const leaderboardItems = computed(() =>
+  isLevelFiltered.value ? LeaderboardPlayDataById.value?.data : data.value?.data,
+)
+
 const getScore = (item) => {
-  if (item.totalScore !== undefined && item.totalScore !== null) {
-    return Math.trunc(item.totalScore * 10) / 10
-  } else if (item.score !== undefined && item.score !== null) {
-    return Math.trunc(item.score * 10) / 10
-  } else {
-    return 0
-  }
+  if (item.totalScore != null) return Math.trunc(item.totalScore * 10) / 10
+  if (item.score != null) return Math.trunc(item.score * 10) / 10
+  return 0
 }
+
+const FilteredLevels = computed(() => {
+  const levels = new Set(
+    data.value?.data?.flatMap((user) => user?.levelsCompleted || []).filter(Boolean),
+  )
+  return [
+    { Level: 'All', title: 'Show All Levels' },
+    ...Array.from(levels)
+      .sort((a, b) => a - b)
+      .map((level) => ({
+        Level: level,
+        title: `Level 0${level}`,
+      })),
+  ]
+})
 
 const handleSelect = (item) => {
-  console.log('Selected item:', item)
+  if (item.Level === 'All') {
+    isLevelFiltered.value = false
+    selectedLevel.value = null
+    currentPage.value = 1
+  } else {
+    isLevelFiltered.value = true
+    selectedLevel.value = item.Level
+    levelPage.value = 1
+  }
 }
 
-const gamePlay = (action) => {
+const dropdownLabel = computed(() => {
+  if (!isLevelFiltered.value || selectedLevel.value === null) {
+    return 'Filter Levels'
+  }
+  return `Level 0${selectedLevel.value}`
+})
+
+const gamePlay = async (action) => {
   if (action === 'leave') {
     resetToken()
-    router.push(ROUTES.LOGIN)
+    await router.push(ROUTES.LOGIN)
     toast.success('You Logout Successfully!')
+  } else if (['play-next', 'play', 'resume'].includes(action)) {
+    try {
+      await router.push(ROUTES.DOOR)
+    } catch (err) {
+      console.error('Navigation error:', err)
+    }
   }
-  console.log('click play next', action)
 }
 </script>
 
@@ -83,16 +138,17 @@ const gamePlay = (action) => {
             still want to log out?
           </p>
         </Modal>
+
         <DropDownVue
-          :items="items"
-          buttonText="Filter Levels"
+          :items="FilteredLevels"
+          :buttonText="dropdownLabel"
           defaultLocation="bottom"
           @select="handleSelect"
         />
       </main>
     </div>
 
-    <Loader v-if="isLoading || isFetching" color="white" />
+    <Loader v-if="isLoading || isFetching || isLevelLoading || isFetchingLevel" color="white" />
 
     <div v-else class="main-content-table">
       <Table :headers="headers" :items="leaderboardItems">
@@ -105,19 +161,15 @@ const gamePlay = (action) => {
         </template>
 
         <template #item.totalScore="{ item }">
-          <span>
-            {{ getScore(item) }}
-          </span>
+          <div>
+            <span>
+              {{ getScore(item) }}
+            </span>
+          </div>
         </template>
       </Table>
 
-      <Pagination
-        v-model="currentPage"
-        :length="totalPages"
-        :total-visible="5"
-        rounded="circle"
-        modelValue="currentPage"
-      />
+      <Pagination v-model="page" :length="totalPages" :total-visible="5" rounded="circle" />
     </div>
   </main>
 </template>

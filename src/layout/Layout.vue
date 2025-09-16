@@ -1,11 +1,27 @@
 <script setup>
-import { RouterView } from 'vue-router'
-import Header from '../components/Header.vue'
+import { RouterView, useRoute } from 'vue-router'
+import Header from '@/components/Header.vue'
+import { ROUTES } from '@/router'
+import { computed } from 'vue'
+import doorBg from '@/assets/images/gate.jpg'
+import leaderboardBg from '@/assets/images/leaderboard.jpg'
+import findWordOne from '@/assets/images/level-01.jpg'
+
+const route = useRoute()
+
+const layoutStyle = computed(() => {
+  return {
+    backgroundImage: `url(${route.path === ROUTES.DOOR ? doorBg : route.path === ROUTES.FIND_WORD ? findWordOne : leaderboardBg})`,
+    backgroundRepeat: 'no-repeat',
+    backgroundPosition: 'center center',
+    backgroundSize: 'cover',
+  }
+})
 </script>
 
 <template>
-  <div class="layout">
-    <div class="animation-brightness"></div>
+  <div class="layout" :style="layoutStyle">
+    <div v-if="route.path !== ROUTES.FIND_WORD" class="animation-brightness"></div>
     <div class="layout-wrapper">
       <Header />
       <RouterView />
@@ -17,7 +33,6 @@ import Header from '../components/Header.vue'
 .layout {
   min-height: 100vh;
   width: 100vw;
-  background: url('@/assets/images/leaderboard.jpg') no-repeat center center / cover;
   position: relative;
   overflow-x: hidden;
 }

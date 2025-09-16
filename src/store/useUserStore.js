@@ -4,11 +4,17 @@ export const useUserStore = defineStore('user', {
   state: () => ({
     IsFirstTime: false,
     token: null,
+    pageName: '',
+    level: null,
   }),
 
   actions: {
     setIsFirstTime(value) {
       this.IsFirstTime = value
+    },
+
+    setPageName(value) {
+      this.pageName = value
     },
 
     setToken(value) {
@@ -17,6 +23,10 @@ export const useUserStore = defineStore('user', {
 
     resetToken() {
       this.token = null
+    },
+
+    setLevel(level) {
+      this.level = level
     },
   },
 

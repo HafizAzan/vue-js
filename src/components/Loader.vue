@@ -6,7 +6,7 @@ const props = defineProps({
   },
   color: {
     type: String,
-    default: 'primary',
+    default: 'white',
   },
   overlay: {
     type: Boolean,

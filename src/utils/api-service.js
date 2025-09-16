@@ -1,13 +1,79 @@
 import { API_ROUTES } from '@/router/apiRoutes'
 import API from './axios'
 
-// play data fetch
-const fetchLeaderBoardData = async ({ page = '1', userId = '68c3508d4e2d77b7ee79032e' }) => {
+const fetchLeaderBoardData = async ({ page = '1', userId = '123' }) => {
   const response = await API.get(`${API_ROUTES.PLAY}?page=${page}&loggedInUserId=${userId}`)
   return response.data
 }
 
-// auth api
+const fetchLeaderBoardDataByLevel = async ({ page = '1', level = '1' }) => {
+  const response = await API.get(`${API_ROUTES.FILTER_LEVEL.replace(':level', level)}?page=${page}`)
+  return response.data
+}
+
+const fetchQuestions = async () => {
+  const response = await API.get(API_ROUTES.GET_QUESTION)
+  return response?.data
+}
+
+const fetchAllValues = async () => {
+  const response = await API.get(API_ROUTES.VALUES)
+  return response.data
+}
+
+const fetchAllUsers = async () => {
+  const response = await API.get(API_ROUTES.GET_ALL_USERS)
+  return response.data
+}
+
+const fetchTime = async () => {
+  const response = await API.get(API_ROUTES.TIME)
+  return response.data
+}
+
+const fetchSessionWord = async () => {
+  const response = await API.get(API_ROUTES.GET_SESSION_WORD)
+  return response.data
+}
+
+const fetchAllMcqs = async () => {
+  const response = await API.get(API_ROUTES.GET_ALL_MCQ)
+  return response.data
+}
+
+const updatePlayUser = async ({ body = {}, userId }) => {
+  try {
+    const response = await API.patch(
+      `${API_ROUTES.SECURITY_ANSWER?.replace(':userId', userId)}`,
+      body,
+    )
+    return response.data
+  } catch (error) {
+    throw error
+  }
+}
+
+const updateUserWithSection = async ({ body = {}, userId }) => {
+  try {
+    const response = await API.patch(`${API_ROUTES.UPDATE_USERS?.replace(':itemId', userId)}`, body)
+    return response.data
+  } catch (error) {
+    throw error
+  }
+}
+
+const updateValueItems = async ({ body = {}, userId }) => {
+  try {
+    const response = await API.patch(
+      `${API_ROUTES.UPDATE_VALUES?.replace(':userId', userId)}`,
+      body,
+    )
+    return response.data
+  } catch (error) {
+    throw error
+  }
+}
+
 const loginUser = async ({ body = {} }) => {
   try {
     const response = await API.post(`${API_ROUTES.LOGIN}`, body)
@@ -26,4 +92,21 @@ const RegisterUser = async ({ body = {} }) => {
   }
 }
 
-export { fetchLeaderBoardData, loginUser, RegisterUser }
+export {
+  // * Fetch
+  fetchLeaderBoardData,
+  fetchQuestions,
+  fetchAllValues,
+  fetchAllUsers,
+  fetchLeaderBoardDataByLevel,
+  fetchTime,
+  fetchSessionWord,
+  fetchAllMcqs,
+
+  // * Update + Add
+  loginUser,
+  RegisterUser,
+  updatePlayUser,
+  updateValueItems,
+  updateUserWithSection,
+}

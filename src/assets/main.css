@@ -5,6 +5,11 @@
   margin: 0 auto;
 }
 
+.h1 {
+  color: white;
+  font-weight: 800;
+}
+
 .h2 {
   color: white;
   font-weight: 700;
@@ -18,4 +23,8 @@
 .h6 {
   color: white;
   font-weight: 600;
+}
+
+.P {
+  color: white;
 }

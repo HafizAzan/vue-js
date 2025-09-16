@@ -2,17 +2,36 @@
 import Button from '@/components/Button.vue'
 import Input from '@/components/Input.vue'
 import { useUserStore } from '@/store/useUserStore'
-import { loginUser, RegisterUser } from '@/utils/api-service'
-import { useMutation } from '@tanstack/vue-query'
+import {
+  fetchAllUsers,
+  fetchAllValues,
+  loginUser,
+  RegisterUser,
+  updatePlayUser,
+  updateUserWithSection,
+  updateValueItems,
+} from '@/utils/api-service'
+import { useMutation, useQuery } from '@tanstack/vue-query'
 import { computed, reactive, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
 import { ROUTES } from '../router'
+import Loader from '@/components/Loader.vue'
 
 const route = useRoute()
 const router = useRouter()
-const { setToken } = useUserStore()
+const { setToken, setPageName, token } = useUserStore()
 const isLogin = computed(() => route.path === '/login')
+
+const { data: allValues, isLoading: isValueLoading } = useQuery({
+  queryKey: ['get-values'],
+  queryFn: fetchAllValues,
+})
+
+const { data: allUsers, isLoading: isAllUsersLoading } = useQuery({
+  queryKey: ['get-all-users'],
+  queryFn: fetchAllUsers,
+})
 
 const { mutateAsync: login, isPending } = useMutation({
   mutationFn: (payload) => loginUser({ body: payload }),
@@ -20,6 +39,16 @@ const { mutateAsync: login, isPending } = useMutation({
 
 const { mutateAsync: register, isPending: isRegiserPending } = useMutation({
   mutationFn: (payload) => RegisterUser({ body: payload }),
+})
+
+const { mutateAsync: updateUser, isPending: isUserPending } = useMutation({
+  mutationKey: ['update-user'],
+  mutationFn: ({ userId, userData }) => updateUserWithSection({ userId, body: userData }),
+})
+
+const { mutateAsync: updateArray, isPending: isValuesPending } = useMutation({
+  mutationKey: ['update-value-items'],
+  mutationFn: ({ body, itemId }) => updateValueItems({ userId: itemId, body }),
 })
 
 const form = reactive({
@@ -37,6 +66,41 @@ watch(
   },
   { immediate: true },
 )
+
+const assignValues = async (userId) => {
+  const userWithItems = allUsers?.value?.users?.filter((single) => single?.items?.length > 0)
+  const assignValues = allValues?.value?.data?.A
+
+  let findValueItemsWithSection = null
+  for (const data of assignValues) {
+    const isUsed = userWithItems?.some(
+      (user) =>
+        user?.section === data?.section &&
+        JSON.stringify(user?.items) === JSON.stringify(data?.items),
+    )
+    if (!isUsed && Array.isArray(data?.items) && data?.items.length > 0) {
+      findValueItemsWithSection = data
+      break
+    }
+  }
+
+  if (findValueItemsWithSection) {
+    const userData = {
+      items: findValueItemsWithSection.items,
+      section: findValueItemsWithSection.section,
+    }
+
+    const findSectionId = assignValues?.find(
+      (item) => item?.section === userData?.section && item?.items?.length > 0,
+    )
+
+    await updateUser({ userId, userData })
+    await updateArray({
+      itemId: findSectionId?._id,
+      body: { items: [] },
+    })
+  }
+}
 
 const handleSubmit = async () => {
   if (form.username === '' || form.password === '') {
@@ -68,7 +132,9 @@ const handleSubmit = async () => {
     if (!res?.error) {
       toast.success('User regestered sucessfully!')
       setToken(res?.token)
-      router.push(ROUTES.LEADERBOARD)
+      setPageName('register')
+      await assignValues(res?.token?._id)
+      router.push(ROUTES.ANSWERS)
     } else {
       toast.error(res?.error || res?.error?.message || 'Failed To Submit')
     }
@@ -81,7 +147,11 @@ const handleSubmit = async () => {
 </script>
 <template>
   <v-sheet class="main-form-wrapper" width="600" height="700">
-    <v-form fast-fail @submit.prevent="handleSubmit" class="auth-form">
+    <div v-if="!isLogin && (isValueLoading || isAllUsersLoading)">
+      <Loader />
+    </div>
+
+    <v-form v-else fast-fail @submit.prevent="handleSubmit" class="auth-form">
       <v-typography variants="h3" class="text-h3 h3 form-text">{{
         isLogin ? 'Login' : 'Sign up'
       }}</v-typography>
@@ -105,8 +175,8 @@ const handleSubmit = async () => {
         v-if="!isLogin"
         button-text="Register"
         appendIcon="mdi-arrow-right"
-        :disabled="isRegiserPending"
-        :isLoading="isRegiserPending"
+        :disabled="isRegiserPending || isUserPending || isValuesPending"
+        :isLoading="isRegiserPending || isUserPending || isValuesPending"
       />
       <Button
         type="submit"
