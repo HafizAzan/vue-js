@@ -2,7 +2,7 @@
 import { ref, watch } from 'vue'
 import Button from './Button.vue'
 
-const emit = defineEmits(['close', 'agree', 'disagree'])
+const emit = defineEmits(['close', 'agree', 'disagree', 'update:modelValue'])
 
 const props = defineProps({
   modelValue: {
@@ -27,11 +27,11 @@ const props = defineProps({
   },
   agreeText: {
     type: String,
-    default: 'Agree',
+    default: '',
   },
   disagreeText: {
     type: String,
-    default: 'Disagree',
+    default: '',
   },
   showActions: {
     type: Boolean,
@@ -39,7 +39,12 @@ const props = defineProps({
   },
   buttonText: {
     type: String,
-    default: 'Open Modal',
+    default: '',
+  },
+
+  closeOnOutsideClick: {
+    type: Boolean,
+    default: true,
   },
 })
 
@@ -64,21 +69,39 @@ const handleDisagree = () => {
 </script>
 
 <template>
-  <v-dialog v-model="dialog" :max-width="maxWidth" class="main-modal">
+  <v-dialog
+    v-model="dialog"
+    :max-width="maxWidth"
+    class="main-modal"
+    :persistent="!closeOnOutsideClick"
+  >
     <template v-slot:activator="{ props: activatorProps }">
       <slot name="activator" v-bind="{ activatorProps }">
-        <Button :buttonText="buttonText" v-bind="activatorProps" />
+        <Button v-if="buttonText" :buttonText="buttonText" v-bind="activatorProps" />
       </slot>
     </template>
 
     <v-card class="modal-card" :title="title" :prepend-icon="prependIcon">
+      <template v-if="$slots.prependIcon">
+        <slot name="prependIcon" />
+      </template>
+
+      <template v-if="$slots.title">
+        <slot name="title" />
+      </template>
+
       <v-card-text>
         <slot />
       </v-card-text>
 
       <v-card-actions class="modal-actions" v-if="showActions">
-        <Button @click="handleDisagree" :button-text="disagreeText" class="disagree-btn" />
-        <Button @click="handleAgree" :button-text="agreeText" />
+        <Button
+          v-if="disagreeText"
+          @click="handleDisagree"
+          :button-text="disagreeText"
+          class="disagree-btn"
+        />
+        <Button v-if="agreeText" @click="handleAgree" :button-text="agreeText" />
       </v-card-actions>
     </v-card>
   </v-dialog>

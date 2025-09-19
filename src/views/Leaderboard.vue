@@ -109,7 +109,7 @@ const gamePlay = async (action) => {
     try {
       await router.push(ROUTES.DOOR)
     } catch (err) {
-      console.error('Navigation error:', err)
+      toast.error(`Navigation error: ${err}`)
     }
   }
 }

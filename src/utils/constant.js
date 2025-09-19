@@ -1,4 +1,4 @@
-import { ref, watch, onUnmounted } from 'vue'
+import { ref, watch, onUnmounted, unref } from 'vue'
 
 export const headers = [
   {
@@ -19,9 +19,51 @@ export const formatTime = (totalSeconds) => {
   return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
 }
 
-export function useTimer(initialTimeFn, getSavedTimeFn, setFn, clearFn, onTick, isMinutes = false) {
+export function useTimer(
+  initialTimeFn,
+  getSavedTimeFn,
+  setFn,
+  clearFn,
+  onTick,
+  isMinutes = false,
+  endTimeRef = null,
+) {
   const timeLeft = ref(0)
   const intervalId = ref(null)
+
+  const startTimer = () => {
+    if (intervalId.value) clearInterval(intervalId.value)
+
+    intervalId.value = setInterval(() => {
+      if (unref(endTimeRef)) {
+        clearInterval(intervalId.value)
+        timeLeft.value = 0
+        setFn(timeLeft.value)
+        clearFn()
+        return
+      }
+
+      if (timeLeft.value > 1) {
+        timeLeft.value--
+        setFn(timeLeft.value)
+        if (onTick) onTick(timeLeft.value)
+      } else {
+        clearInterval(intervalId.value)
+
+        if (isMinutes) {
+          timeLeft.value = 0
+          setFn(timeLeft.value)
+          clearFn()
+        } else {
+          const restartVal = initialTimeFn()
+          timeLeft.value = restartVal
+          setFn(timeLeft.value)
+          if (onTick) onTick(timeLeft.value)
+          startTimer()
+        }
+      }
+    }, 1000)
+  }
 
   watch(
     initialTimeFn,
@@ -32,18 +74,7 @@ export function useTimer(initialTimeFn, getSavedTimeFn, setFn, clearFn, onTick, 
       timeLeft.value = savedTime !== null ? savedTime : isMinutes ? newVal * 60 : newVal
       setFn(timeLeft.value)
 
-      if (intervalId.value) clearInterval(intervalId.value)
-
-      intervalId.value = setInterval(() => {
-        if (timeLeft.value > 0) {
-          timeLeft.value--
-          setFn(timeLeft.value)
-          if (onTick) onTick(timeLeft.value)
-        } else {
-          clearInterval(intervalId.value)
-          clearFn()
-        }
-      }, 1000)
+      startTimer()
     },
     { immediate: true },
   )

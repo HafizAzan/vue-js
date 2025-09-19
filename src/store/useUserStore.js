@@ -5,7 +5,6 @@ export const useUserStore = defineStore('user', {
     IsFirstTime: false,
     token: null,
     pageName: '',
-    level: null,
   }),
 
   actions: {
@@ -23,10 +22,6 @@ export const useUserStore = defineStore('user', {
 
     resetToken() {
       this.token = null
-    },
-
-    setLevel(level) {
-      this.level = level
     },
   },
 

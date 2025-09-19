@@ -12,4 +12,5 @@ export const API_ROUTES = {
   TIME: '/api/time/get-time',
   GET_SESSION_WORD: '/api/mcq/get-session-words',
   GET_ALL_MCQ: `/api/mcq`,
+  POST_MCQ_QUESTIONS: `/api/mcq/add-words`,
 }

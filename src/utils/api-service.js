@@ -1,6 +1,7 @@
 import { API_ROUTES } from '@/router/apiRoutes'
 import API from './axios'
 
+// fetch data service
 const fetchLeaderBoardData = async ({ page = '1', userId = '123' }) => {
   const response = await API.get(`${API_ROUTES.PLAY}?page=${page}&loggedInUserId=${userId}`)
   return response.data
@@ -41,6 +42,19 @@ const fetchAllMcqs = async () => {
   return response.data
 }
 
+// post api service
+
+const addPlayUser = async (body = {}) => {
+  try {
+    const response = await API.post(`${API_ROUTES.POST_MCQ_QUESTIONS}`, body)
+    return response.data
+  } catch (error) {
+    throw error
+  }
+}
+
+// update api service
+
 const updatePlayUser = async ({ body = {}, userId }) => {
   try {
     const response = await API.patch(
@@ -74,6 +88,7 @@ const updateValueItems = async ({ body = {}, userId }) => {
   }
 }
 
+// auth api service
 const loginUser = async ({ body = {} }) => {
   try {
     const response = await API.post(`${API_ROUTES.LOGIN}`, body)
@@ -103,10 +118,15 @@ export {
   fetchSessionWord,
   fetchAllMcqs,
 
-  // * Update + Add
-  loginUser,
-  RegisterUser,
+  // * Add
+  addPlayUser,
+
+  // * Update
   updatePlayUser,
   updateValueItems,
   updateUserWithSection,
+
+  // * Auth
+  loginUser,
+  RegisterUser,
 }
