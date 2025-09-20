@@ -3,125 +3,230 @@ import { useUserStore } from './useUserStore'
 
 export const usePlayStore = defineStore('play', {
   state: () => ({
-    playCard: {},
-    currentTimeMap: {},
-    currentSessionTime: {},
-    selectedOpt: null,
+    data: {},
   }),
 
   actions: {
-    setSelectedOpt(value) {
-      console.log(value, 'value')
-      this.selectedOpt = value
-    },
-
-    getUserKey(level = null, session = null) {
+    buildKey(prefix, includeLevelSession = false) {
       const userStore = useUserStore()
       const userId = userStore.token?._id
       if (!userId) return null
-      level = level ?? 1
-      session = session ?? 1
-      return `${userId}__level-${level}__session-${session}`
+
+      if (includeLevelSession) {
+        return `${prefix}__${userId}__level-${this.getLevel()}_session-${this.getSession()}`
+      }
+
+      return `${prefix}__${userId}`
     },
 
-    getPlayData(level = null, session = null) {
-      const key = this.getUserKey(level, session)
+    setSection(value) {
+      const key = this.buildKey(`section`)
       if (!key) return null
-      return this.playCard[key] ?? { level: level ?? 1, session: session ?? 1, playedSession: 0 }
+      this.data[key] = value
     },
 
-    getLevel(level = null, session = null) {
-      return this.getPlayData(level, session)?.level ?? 1
-    },
-
-    getSession(level = null, session = null) {
-      return this.getPlayData(level, session)?.session ?? 1
-    },
-
-    getPlayedSession(level = null, session = null) {
-      return this.getPlayData(level, session)?.playedSession ?? 0
-    },
-
-    incrementLevel(level = null, session = null) {
-      const key = this.getUserKey(level, session)
-      if (!key) return
-
-      if (!this.playCard[key]) {
-        this.playCard[key] = { level: 1, session: 1, playedSession: 0 }
-      }
-
-      this.playCard[key] = {
-        ...this.playCard[key],
-        level: (this.playCard[key].level ?? 1) + 1,
-      }
-    },
-
-    incrementSession(level = null, session = null) {
-      const key = this.getUserKey(level, session)
-      if (!key) return
-
-      if (!this.playCard[key]) {
-        this.playCard[key] = { level: 1, session: 1, playedSession: 0 }
-      }
-
-      this.playCard[key] = {
-        ...this.playCard[key],
-        session: (this.playCard[key].session ?? 1) + 1,
-      }
-    },
-
-    incrementPlayedSession(level = null, session = null) {
-      const key = this.getUserKey(level, session)
-      if (!key) return
-
-      if (!this.playCard[key]) {
-        this.playCard[key] = { level: 1, session: 1, playedSession: 0 }
-      }
-
-      this.playCard[key] = {
-        ...this.playCard[key],
-        playedSession: (this.playCard[key].playedSession ?? 0) + 1,
-      }
-    },
-
-    setTime(value, level = null, session = null) {
-      const key = this.getUserKey(level, session)
-      if (!key) return
-      this.currentTimeMap = { ...this.currentTimeMap, [key]: value }
-    },
-
-    getTimeForUser(level = null, session = null) {
-      const key = this.getUserKey(level, session)
+    getSection() {
+      const key = this.buildKey(`section`)
       if (!key) return null
-      return this.currentTimeMap[key] ?? null
+      return this.data[key] ?? null
     },
 
-    clearTimeForUser(level = null, session = null) {
-      const key = this.getUserKey(level, session)
-      if (!key) return
-      const newMap = { ...this.currentTimeMap }
-      delete newMap[key]
-      this.currentTimeMap = newMap
-    },
-
-    setSessionTime(value, level = null, session = null) {
-      const key = this.getUserKey(level, session)
-      if (!key) return
-      this.currentSessionTime = { ...this.currentSessionTime, [key]: value }
-    },
-
-    getSessionTimeForUser(level = null, session = null) {
-      const key = this.getUserKey(level, session)
+    clearSection() {
+      const key = this.buildKey(`section`)
       if (!key) return null
-      return this.currentSessionTime[key] ?? null
+      delete this.data[key]
     },
 
-    clearSessionTimeForUser(level = null, session = null) {
-      const key = this.getUserKey(level, session)
+    setLastModal(value) {
+      const key = this.buildKey('LastModal', true)
       if (!key) return null
-      const newMap = { ...this.currentSessionTime }
-      delete newMap[key]
-      this.currentSessionTime = newMap
+      this.data[key] = value
+    },
+
+    getLastModal() {
+      const key = this.buildKey('LastModal', true)
+      if (!key) return false
+      return this.data[key] ?? false
+    },
+
+    clearLastModal() {
+      const key = this.buildKey('LastModal', true)
+      if (!key) return false
+      delete this.data[key]
+    },
+
+    setSessionModal(value) {
+      const key = this.buildKey('sessionModal', true)
+      if (!key) return null
+      this.data[key] = value
+    },
+
+    getSessionModal() {
+      const key = this.buildKey('sessionModal', true)
+      if (!key) return false
+      return this.data[key] ?? false
+    },
+
+    clearSessionModal() {
+      const key = this.buildKey('sessionModal', true)
+      if (!key) return false
+      delete this.data[key]
+    },
+
+    setCompleteTime(value) {
+      const key = this.buildKey(`completeTime_level-${this.getLevel()}`)
+      if (!key) return null
+      this.data[key] = value
+    },
+
+    getCompleteTime() {
+      const key = this.buildKey(`completeTime_level-${this.getLevel()}`)
+      if (!key) return 0
+      return this.data[key] ?? 0
+    },
+
+    clearCompleteTime() {
+      const key = this.buildKey(`completeTime_level-${this.getLevel()}`)
+      if (!key) return null
+      delete this.data[key]
+    },
+
+    // ========================
+    // 📌 LEVEL
+    // ========================
+
+    setLevel(value) {
+      const key = this.buildKey(`level`)
+      if (!key) return null
+      this.data[key] = value
+    },
+
+    getLevel() {
+      const key = this.buildKey(`level`)
+      if (!key) return 1
+      return this.data[key] ?? 1
+    },
+
+    incrementLevel() {
+      this.setLevel(this.getLevel() + 1)
+    },
+
+    // ========================
+    // 📌 SESSION
+    // ========================
+    setSession(value) {
+      const key = this.buildKey(`session_level-${this.getLevel()}`)
+      if (!key) return null
+      this.data[key] = value
+    },
+
+    getSession() {
+      const key = this.buildKey(`session_level-${this.getLevel()}`)
+      if (!key) return 1
+      return this.data[key] ?? 1
+    },
+
+    incrementSession() {
+      this.setSession(this.getSession() + 1)
+      this.clearSelectedOpt()
+      this.clearSessionTime()
+    },
+
+    // ========================
+    // 📌 PLAYED SESSION
+    // ========================
+    setPlayedSession(value) {
+      const key = this.buildKey(`playedSession_level-${this.getLevel()}`)
+      if (!key) return null
+      this.data[key] = value
+    },
+
+    getPlayedSession() {
+      const key = this.buildKey(`playedSession_level-${this.getLevel()}`)
+      if (!key) return 0
+      return this.data[key] ?? 0
+    },
+
+    incrementPlayedSession() {
+      this.setPlayedSession(this.getPlayedSession() + 1)
+    },
+
+    // ========================
+    // 📌 SELECTED OPTION
+    // ========================
+    setSelectedOpt(value) {
+      const key = this.buildKey(`selectedOpt_level-${this.getLevel()}`)
+      if (!key) return null
+      this.data[key] = value
+    },
+
+    getSelectedOpt() {
+      const key = this.buildKey(`selectedOpt_level-${this.getLevel()}`)
+      if (!key) return null
+      return this.data[key] ?? null
+    },
+
+    clearSelectedOpt() {
+      const key = this.buildKey(`selectedOpt_level-${this.getLevel()}`)
+      if (!key) return null
+      delete this.data[key]
+    },
+
+    // ========================
+    // 📌 SESSION TIME
+    // ========================
+    setSessionTime(value) {
+      const key = this.buildKey(`sessionTime_level-${this.getLevel()}`)
+      if (!key) return null
+      this.data[key] = value
+    },
+
+    getSessionTime() {
+      const key = this.buildKey(`sessionTime_level-${this.getLevel()}`)
+      if (!key) return null
+      return this.data[key] ?? null
+    },
+
+    clearSessionTime() {
+      const key = this.buildKey(`sessionTime_level-${this.getLevel()}`)
+      if (!key) return null
+      delete this.data[key]
+    },
+
+    // ========================
+    // 📌 CURRENT TIME
+    // ========================
+    setCurrentTime(value) {
+      const key = this.buildKey(`currentTime_level-${this.getLevel()}`)
+      if (!key) return null
+      this.data[key] = value
+    },
+
+    getCurrentTime() {
+      const key = this.buildKey(`currentTime_level-${this.getLevel()}`)
+      if (!key) return null
+      return this.data[key] ?? null
+    },
+
+    clearCurrentTime() {
+      const key = this.buildKey(`currentTime_level-${this.getLevel()}`)
+      if (!key) return null
+      delete this.data[key]
+    },
+
+    // ========================
+    // 📌 RESET
+    // ========================
+    resetAll() {
+      const userStore = useUserStore()
+      const userId = userStore.token?._id
+      if (!userId) return
+
+      Object.keys(this.data).forEach((k) => {
+        if (k.includes(`__${userId}`)) {
+          delete this.data[k]
+        }
+      })
     },
   },
 

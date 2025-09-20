@@ -42,6 +42,11 @@ const fetchAllMcqs = async () => {
   return response.data
 }
 
+const fetchUserById = async (userId) => {
+  const response = await API.get(API_ROUTES.GET_SINGLE_USER?.replace(':userId', userId))
+  return response.data
+}
+
 // post api service
 
 const addPlayUser = async (body = {}) => {
@@ -117,6 +122,7 @@ export {
   fetchTime,
   fetchSessionWord,
   fetchAllMcqs,
+  fetchUserById,
 
   // * Add
   addPlayUser,

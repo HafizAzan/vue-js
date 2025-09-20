@@ -13,4 +13,5 @@ export const API_ROUTES = {
   GET_SESSION_WORD: '/api/mcq/get-session-words',
   GET_ALL_MCQ: `/api/mcq`,
   POST_MCQ_QUESTIONS: `/api/mcq/add-words`,
+  GET_SINGLE_USER: `/api/user/get-user/:userId`,
 }
