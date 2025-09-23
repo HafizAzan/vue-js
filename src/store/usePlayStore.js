@@ -20,20 +20,21 @@ export const usePlayStore = defineStore('play', {
     },
 
     setSection(value) {
-      const key = this.buildKey(`section`)
+      const key = this.buildKey(`section_level-${this.getLevel()}`)
       if (!key) return null
       this.data[key] = value
     },
 
     getSection() {
-      const key = this.buildKey(`section`)
+      const key = this.buildKey(`section_level-${this.getLevel()}`)
       if (!key) return null
       return this.data[key] ?? null
     },
 
     clearSection() {
-      const key = this.buildKey(`section`)
+      const key = this.buildKey(`section_level-${this.getLevel()}`)
       if (!key) return null
+      console.log(this.data[key], 'clear secton')
       delete this.data[key]
     },
 
@@ -108,9 +109,24 @@ export const usePlayStore = defineStore('play', {
     },
 
     incrementLevel() {
-      this.setLevel(this.getLevel() + 1)
-    },
+      const oldLevel = this.getLevel()
+      const userStore = useUserStore()
 
+      const userId = userStore.token?._id
+      if (userId) {
+        Object.keys(this.data).forEach((key) => {
+          if (key.includes(`__${userId}`) && key.includes(`level-${oldLevel}`)) {
+            delete this.data[key]
+          }
+        })
+      }
+
+      const newLevel = oldLevel + 1
+      this.setLevel(newLevel)
+      this.setSession(1)
+      this.clearSessionTime()
+      this.clearCurrentTime()
+    },
     // ========================
     // 📌 SESSION
     // ========================

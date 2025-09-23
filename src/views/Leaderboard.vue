@@ -1,20 +1,36 @@
 <script setup>
+// components
 import Button from '@/components/Button.vue'
 import DropDownVue from '@/components/DropDown.vue'
 import Loader from '@/components/Loader.vue'
 import Pagination from '@/components/Pagination.vue'
 import Table from '@/components/Table.vue'
 import Modal from '@/components/Modal.vue'
-import { fetchLeaderBoardData, fetchLeaderBoardDataByLevel } from '@/utils/api-service'
+
+// api-service
+import {
+  fetchLeaderBoardData,
+  fetchLeaderBoardDataByLevel,
+  fetchSessionWord,
+  fetchTime,
+} from '@/utils/api-service'
+
+//constant
 import { headers } from '@/utils/constant'
-import { ref, computed } from 'vue'
-import { useQuery } from '@tanstack/vue-query'
-import { useUserStore } from '../store/useUserStore'
+
+// default + library
+import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { ROUTES } from '../router'
+import { useQuery } from '@tanstack/vue-query'
 import { toast } from 'vue-sonner'
 
+// store + routes
+import { useUserStore } from '../store/useUserStore'
+import { ROUTES } from '../router'
+import { usePlayStore } from '@/store/usePlayStore'
+
 const { resetToken, token } = useUserStore()
+const playStore = usePlayStore()
 const router = useRouter()
 
 const currentPage = ref(1)
@@ -22,6 +38,7 @@ const levelPage = ref(1)
 const selectedLevel = ref(null)
 const isLevelFiltered = ref(false)
 const open = ref(false)
+const isCompleteSession = ref(null)
 
 const { data, isLoading, isFetching } = useQuery({
   queryKey: ['leaderboard', currentPage],
@@ -42,6 +59,16 @@ const {
     }),
 })
 
+const { data: getTime } = useQuery({
+  queryKey: ['get-time'],
+  queryFn: fetchTime,
+})
+
+const { data: getSessionWord } = useQuery({
+  queryKey: ['get-session-word'],
+  queryFn: fetchSessionWord,
+})
+
 const page = computed({
   get: () => (isLevelFiltered.value ? levelPage.value : currentPage.value),
   set: (val) => {
@@ -49,6 +76,10 @@ const page = computed({
     else currentPage.value = val
   },
 })
+
+const findMinimumOnePlay = data.value?.loggedInUser?.userId === token?._id
+const totalCount = computed(() => getTime?.value?.time?.overAllTime)
+const sessionTime = computed(() => getSessionWord?.value?.cycleTime)
 
 const totalPages = computed(() =>
   isLevelFiltered.value
@@ -81,6 +112,13 @@ const FilteredLevels = computed(() => {
   ]
 })
 
+const playAgainLevels = computed(() => {
+  return Array.from({ length: playStore.getLevel() }).map((_, index) => ({
+    level: `Level ${index + 1}`,
+    title: `Level 0${index + 1}`,
+  }))
+})
+
 const handleSelect = (item) => {
   if (item.Level === 'All') {
     isLevelFiltered.value = false
@@ -91,6 +129,11 @@ const handleSelect = (item) => {
     selectedLevel.value = item.Level
     levelPage.value = 1
   }
+}
+
+const handleSelectPlayAgainLevel = (item) => {
+  const level = String(item?.level)?.replace('Level', '').trim()
+  router.push(`${ROUTES.DOOR}?playAgain=${level}`)
 }
 
 const dropdownLabel = computed(() => {
@@ -113,6 +156,58 @@ const gamePlay = async (action) => {
     }
   }
 }
+
+const currentLevelData = computed(() => {
+  const playDataLevel = data.value?.loggedInUser?.plays
+  if (playDataLevel && typeof playDataLevel === 'object') {
+    const keys = Object.keys(playDataLevel)
+    const lastKey = keys[keys.length - 1]
+    return playDataLevel[lastKey]
+  }
+  return null
+})
+
+watch(
+  [data, totalCount, sessionTime],
+  () => {
+    const levelData = currentLevelData.value
+    if (!levelData) return
+
+    const durationRaw = totalCount.value * 60
+    const cycleTime = sessionTime.value
+
+    const expectedSessions =
+      durationRaw && cycleTime ? Math.ceil(Number(durationRaw) / Number(cycleTime)) : 10
+
+    const sessions = levelData?.sessions || []
+
+    const allAnswered = sessions.every(
+      (item) =>
+        item?.answer !== null &&
+        item?.answer !== undefined &&
+        item?.answer !== 'null' &&
+        item?.answer !== '',
+    )
+
+    isCompleteSession.value = sessions.length === expectedSessions && allAnswered
+
+    const isLatestLevel = parseInt(levelData?.level)
+
+    if (allAnswered && sessions.length === expectedSessions) {
+      playStore.setLevel(isLatestLevel + 1)
+    } else if (!allAnswered) {
+      playStore.setLevel(isLatestLevel)
+    }
+  },
+  { immediate: true },
+)
+
+const ButtonText = () => {
+  if (playStore.getLevel() >= 7) return 'Finish'
+  if (isCompleteSession.value) return 'Play Next'
+  else if (!findMinimumOnePlay) return 'Resume'
+  else return 'Play'
+}
 </script>
 
 <template>
@@ -121,7 +216,20 @@ const gamePlay = async (action) => {
       <v-typography variants="h3" class="text-h3 h3">Leaderboard</v-typography>
 
       <main class="content-btns">
-        <Button buttonText="Play" @click="() => gamePlay('play-next')" />
+        <Button
+          :buttonText="ButtonText()"
+          @click="() => gamePlay('play-next')"
+          :disabled="playStore.getLevel() >= 7"
+        />
+
+        <DropDownVue
+          v-if="playStore.getLevel() > 1"
+          :items="playAgainLevels"
+          buttonText="Play Again"
+          defaultLocation="bottom"
+          @select="handleSelectPlayAgainLevel"
+        />
+
         <Modal
           v-model="open"
           title="Are You Sure? You Want To Logout!"

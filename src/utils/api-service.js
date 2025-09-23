@@ -51,7 +51,7 @@ const fetchUserById = async (userId) => {
 
 const addPlayUser = async (body = {}) => {
   try {
-    const response = await API.post(`${API_ROUTES.POST_MCQ_QUESTIONS}`, body)
+    const response = await API.post(`${API_ROUTES.POST_ADD_PLAY_DATA}`, body)
     return response.data
   } catch (error) {
     throw error

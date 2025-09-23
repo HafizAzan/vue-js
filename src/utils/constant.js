@@ -27,14 +27,18 @@ export function useTimer(
   onTick,
   isMinutes = false,
   endTimeRef = null,
+  pausedRef = null,
 ) {
   const timeLeft = ref(0)
   const intervalId = ref(null)
 
   const startTimer = () => {
     if (intervalId.value) clearInterval(intervalId.value)
+    if (pausedRef && unref(pausedRef)) return
 
     intervalId.value = setInterval(() => {
+      if (pausedRef && unref(pausedRef)) return
+
       if (unref(endTimeRef)) {
         clearInterval(intervalId.value)
         timeLeft.value = 0
@@ -46,7 +50,7 @@ export function useTimer(
       if (timeLeft.value > 1) {
         timeLeft.value--
         setFn(timeLeft.value)
-        if (onTick) onTick(timeLeft.value)
+        onTick?.(timeLeft.value)
       } else {
         clearInterval(intervalId.value)
 
@@ -58,7 +62,7 @@ export function useTimer(
           const restartVal = initialTimeFn()
           timeLeft.value = restartVal
           setFn(timeLeft.value)
-          if (onTick) onTick(timeLeft.value)
+          onTick?.(timeLeft.value)
           startTimer()
         }
       }
@@ -69,15 +73,27 @@ export function useTimer(
     initialTimeFn,
     (newVal) => {
       if (!newVal) return
-
       const savedTime = getSavedTimeFn()
       timeLeft.value = savedTime !== null ? savedTime : isMinutes ? newVal * 60 : newVal
       setFn(timeLeft.value)
-
       startTimer()
     },
     { immediate: true },
   )
+
+  if (pausedRef) {
+    watch(
+      pausedRef,
+      (isPaused) => {
+        if (isPaused) {
+          if (intervalId.value) clearInterval(intervalId.value)
+        } else {
+          startTimer()
+        }
+      },
+      { immediate: true },
+    )
+  }
 
   onUnmounted(() => {
     if (intervalId.value) clearInterval(intervalId.value)

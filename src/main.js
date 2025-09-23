@@ -17,8 +17,8 @@ import 'vue-sonner/style.css'
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 5,
-      cacheTime: 1000 * 60 * 10,
+      staleTime: 1000 * 60 * 2,
+      cacheTime: 1000 * 60 * 5,
       refetchOnWindowFocus: true,
       refetchOnReconnect: true,
       refetchInterval: false,

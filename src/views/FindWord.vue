@@ -1,15 +1,20 @@
 <script setup>
+import { nextTick, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { computed, onBeforeUnmount, onMounted, ref, watchEffect } from 'vue'
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watchEffect } from 'vue'
 import { useMutation, useQuery } from '@tanstack/vue-query'
+import { ROUTES } from '@/router'
 
 // API-service
 import {
   fetchAllMcqs,
+  fetchAllUsers,
   fetchAllValues,
   fetchSessionWord,
   fetchTime,
   fetchUserById,
+  updateUserWithSection,
+  updateValueItems,
 } from '@/utils/api-service'
 import { addPlayUser } from '../utils/api-service'
 
@@ -24,7 +29,7 @@ import { useUserStore } from '@/store/useUserStore'
 import Loader from '@/components/Loader.vue'
 import Button from '@/components/Button.vue'
 import Modal from '@/components/Modal.vue'
-import { ROUTES } from '@/router'
+import { toast } from 'vue-sonner'
 
 const { token } = useUserStore()
 const playStore = usePlayStore()
@@ -32,6 +37,9 @@ const router = useRouter()
 
 // states
 const animationActive = ref(true)
+const isAssigningSection = ref(true)
+const shouldRefetchUsers = ref(true)
+const controllValues = reactive({ values: [] })
 
 // API CALLS
 const { data: getTime, isLoading: isTimeloading } = useQuery({
@@ -46,11 +54,6 @@ const {
 } = useQuery({
   queryKey: ['get-session-word'],
   queryFn: fetchSessionWord,
-  onSuccess(response) {
-    if (response.status === 200 && ['Modified', 'OK'].includes(response.statusText)) {
-      refetchHiddenWord()
-    }
-  },
 })
 
 const { data: getSessionMcq, isLoading: isMcqLoading } = useQuery({
@@ -58,22 +61,58 @@ const { data: getSessionMcq, isLoading: isMcqLoading } = useQuery({
   queryFn: fetchAllMcqs,
 })
 
-const { data: allValues, isLoading: isValueLoading } = useQuery({
-  queryKey: ['get-values'],
-  queryFn: fetchAllValues,
-})
-
-const { data: getSingleUser, isLoading: isSingleUserLoading } = useQuery({
+// single user
+const {
+  data: getSingleUser,
+  isLoading: isSingleUserLoading,
+  refetch: refetchSingleUser,
+} = useQuery({
   queryKey: ['get-single-user'],
   queryFn: () => fetchUserById(token?._id),
   enabled: !!token?._id,
 })
 
-// Add Api
+// update User ++ Assign Array
+const { data: allValues, isLoading: isValueLoading } = useQuery({
+  queryKey: ['get-values'],
+  queryFn: fetchAllValues,
+})
+
+const {
+  data: allUsers,
+  isLoading: isAllUsersLoading,
+  refetch: refetchAllUser,
+} = useQuery({
+  queryKey: ['get-all-register-users'],
+  queryFn: fetchAllUsers,
+})
+
+// Mutations
 const { mutateAsync: addPlayData, isPending: isPlayAddingLoader } = useMutation({
   mutationKey: ['add-play-data'],
   mutationFn: (payload) => addPlayUser(payload),
 })
+
+const { mutateAsync: updateUser, isPending: isUserPending } = useMutation({
+  mutationKey: ['update-user'],
+  mutationFn: (userData) => updateUserWithSection({ userId: token?._id, body: userData }),
+})
+
+const { mutateAsync: updateArray, isPending: isValuesPending } = useMutation({
+  mutationKey: ['update-value-items'],
+  mutationFn: ({ body, itemId }) => updateValueItems({ userId: itemId, body }),
+})
+
+// computed
+const isPageLoading = computed(
+  () =>
+    isTimeloading.value ||
+    isHiddenWordLoading.value ||
+    isMcqLoading.value ||
+    isAssigningSection.value,
+)
+
+const paused = computed(() => isPageLoading.value)
 
 // TIMERS
 const timerSeconds = useTimer(
@@ -84,6 +123,7 @@ const timerSeconds = useTimer(
   null,
   true,
   false,
+  paused,
 )
 
 const isEnd = computed(() => timerSeconds.value <= 0)
@@ -96,11 +136,13 @@ const timerSessionSeconds = useTimer(
   null,
   false,
   isEnd,
+  paused,
 )
 
 const userItems = computed(() => getSingleUser.value?.user?.items ?? [])
 const userSection = computed(() => getSingleUser.value?.user?.section ?? null)
-const AllValues = computed(() => allValues?.value?.data?.A ?? null)
+const allValuesForUsers = computed(() => allValues.value?.data?.A)
+const allRegisterUsers = computed(() => allUsers?.value?.users)
 
 const getHiddenWord = computed(() => ({
   options: getSessionWord?.value?.options,
@@ -129,34 +171,6 @@ const expectedLastSession = computed(() => {
   return playStore.getSession() === totalSession.value
 })
 
-watchEffect(() => {
-  if (isSingleUserLoading.value || !userItems.value.length) return
-
-  const parsedItems = userItems.value.map((item) => parseFloat(item))
-  console.log('parsedItems:', parsedItems)
-
-  if (userSection.value) {
-    playStore.setSection(userSection.value)
-  } else {
-    playStore.clearSection()
-  }
-})
-
-watchEffect(() => {
-  if (!animationTime.value || !animationStopTime.value) return
-
-  const onDuration = animationTime.value * 1000
-  const offDuration = animationStopTime.value * 1000
-  const cycleDuration = onDuration + offDuration
-  const totalCountMs = totalCount.value * 60
-  const elapsedTimeMs = timerSeconds.value
-  const timePassed = (totalCountMs - elapsedTimeMs) * 1000
-  const timeInCycle = timePassed % cycleDuration
-  animationActive.value = timeInCycle < onDuration
-})
-
-watchEffect(() => {})
-
 const sessionModal = computed({
   get: () => playStore.getSessionModal(),
   set: (val) => playStore.setSessionModal(val),
@@ -167,16 +181,101 @@ const lastModal = computed({
   set: (val) => playStore.setLastModal(val),
 })
 
-const handleCheckBox = (single) => {
-  if (playStore.getSelectedOpt() === single) {
-    playStore.setSelectedOpt(null)
-  } else {
-    playStore.setSelectedOpt(single)
+// Watchers
+watch(
+  [userItems, userSection, isSingleUserLoading],
+  ([items, section, loading]) => {
+    if (loading) return
+
+    if (items.length) {
+      playStore.setSection(section)
+      controllValues.values = items.map((item) => parseFloat(item))
+      if (section) playStore.setSection(section)
+      else playStore.clearSection()
+      isAssigningSection.value = false
+    }
+  },
+  { immediate: true },
+)
+
+watch(
+  [userItems, isSingleUserLoading, isValueLoading, isAllUsersLoading],
+  async ([items, userLoading, valueLoading, allUsersLoading]) => {
+    if (userLoading || valueLoading || allUsersLoading) return
+
+    if (shouldRefetchUsers.value) {
+      await refetchAllUser()
+    }
+
+    if (items?.length > 0 || playStore.getSection()) {
+      isAssigningSection.value = false
+      return
+    }
+
+    const availableSectionsForUser = (allValuesForUsers.value ?? []).filter(
+      (single) =>
+        Array.isArray(single?.items) &&
+        single.items.length > 0 &&
+        !(allRegisterUsers.value ?? [])
+          .map((u) => u.section)
+          .filter(Boolean)
+          .includes(single.section),
+    )
+
+    const FindOneSectionWithItems = availableSectionsForUser[0]
+
+    if (FindOneSectionWithItems) {
+      isAssigningSection.value = true
+      try {
+        await updateUser({
+          items: FindOneSectionWithItems.items,
+          section: FindOneSectionWithItems.section,
+        })
+
+        shouldRefetchUsers.value = false
+        playStore.setSection(FindOneSectionWithItems.section)
+        controllValues.values = FindOneSectionWithItems.items
+      } finally {
+        isAssigningSection.value = false
+      }
+    } else {
+      isAssigningSection.value = false
+    }
+  },
+  { immediate: true },
+)
+
+// show opt and candle off logic
+watchEffect(() => {
+  if (!animationTime.value || !animationStopTime.value) return
+  const onDuration = animationTime.value * 1000
+  const offDuration = animationStopTime.value * 1000
+  const cycleDuration = onDuration + offDuration
+  const totalCountMs = totalCount.value * 60
+  const elapsedTimeMs = timerSeconds.value
+  const timePassed = (totalCountMs - elapsedTimeMs) * 1000
+  const timeInCycle = timePassed % cycleDuration
+  animationActive.value = timeInCycle < onDuration
+})
+
+//Functions
+const updateArrayWithEmptyItems = async () => {
+  const section = playStore.getSection()
+  const findUseSectionEmpty = allValuesForUsers.value?.find(
+    (single) => single?.section === section && single?.items?.length > 0,
+  )
+
+  if (findUseSectionEmpty?._id) {
+    await updateArray({ itemId: findUseSectionEmpty._id, body: { items: [] } })
+  }
+
+  if (Array.isArray(userItems.value) && userItems.value.length > 0 && userSection.value) {
+    await updateUser({ items: [] })
+    await refetchSingleUser()
   }
 }
 
-const leaveHandle = () => {
-  router.push(ROUTES.LEADERBOARD)
+const resetPlayState = () => {
   playStore.clearSessionModal()
   playStore.clearCompleteTime()
   playStore.clearSessionTime()
@@ -185,58 +284,79 @@ const leaveHandle = () => {
   playStore.clearLastModal()
   playStore.setSession(1)
   playStore.setPlayedSession(0)
+  playStore.clearSection()
   lastModal.value = false
   sessionModal.value = false
 }
 
-const handleSubmit = (e) => {
-  e.preventDefault()
+const leaveHandle = (type) => {
+  resetPlayState()
+  if (type === 'playAgain') {
+    router.push(ROUTES.DOOR)
+  } else if (type === 'leave') router.push(ROUTES.LEADERBOARD)
+  else if (type === 'next') {
+    router.push(ROUTES.DOOR)
+    playStore.incrementLevel()
+  }
+}
+
+const handleCheckBox = (single) => {
+  playStore.setSelectedOpt(playStore.getSelectedOpt() === single ? null : single)
+}
+
+const handleSubmit = async (e, isAuto = false) => {
+  e?.preventDefault?.()
+  await nextTick()
+
   const isCorrect = playStore.getSelectedOpt() === getHiddenWord?.value?.hiddenWord
 
   const cycleDuration = getHiddenWord?.value?.cycleTime * 1000
-  const totalCountMs = totalCount.value * 60
-  const elapsedTimeMs = timerSeconds.value
-  const timePassed = (totalCountMs - elapsedTimeMs) * 1000
+  const timePassed = (totalCount.value * 60 - timerSeconds.value) * 1000
   const timeInCycle = timePassed % cycleDuration
+  const timeTaken = isAuto
+    ? 0
+    : timeInCycle <= cycleDuration
+      ? Math.floor(timeInCycle / 1000)
+      : getHiddenWord?.value?.cycleTime
 
-  const timeTakenBaseOnDuration =
-    timeInCycle <= cycleDuration ? Math.floor(timeInCycle / 1000) : getHiddenWord?.value?.cycleTime
-
-  const previousCompleteTime = playStore.getCompleteTime?.() ?? 0
-  const updatedCompleteTime = previousCompleteTime + timeTakenBaseOnDuration
-  playStore.setCompleteTime(updatedCompleteTime)
-
-  const sessionObject = {
-    session: playStore.getSession(),
-    answer: playStore.getSelectedOpt(),
-    isCorrect,
-    score: 10,
-    time: timeTakenBaseOnDuration,
-  }
+  const updatedCompleteTime = (playStore.getCompleteTime?.() ?? 0) + (isAuto ? 0 : timeTaken)
 
   const body = {
     userId: token?._id,
     level: playStore.getLevel(),
-    section: 9000,
+    section: playStore.getSection(),
     score: 20,
     completeTime: updatedCompleteTime,
-    sessions: [sessionObject],
+    sessions: [
+      {
+        session: isAuto ? playStore.getSession() - 1 : playStore.getSession(),
+        answer: playStore.getSelectedOpt() ?? 'null',
+        isCorrect: isCorrect ?? false,
+        score: 10,
+        time: timeTaken,
+      },
+    ],
   }
 
-  console.log(body, 'body')
-  playStore.incrementPlayedSession()
-  playStore.setSelectedOpt(null)
-  sessionModal.value = true
+  const res = await addPlayData(body)
+  if (!res?.error) {
+    toast.success('Add session SuccessFully!')
+    playStore.setCompleteTime(updatedCompleteTime)
+    isAuto ? 0 : playStore.incrementPlayedSession()
+    playStore.setSelectedOpt(null)
+    isAuto ? (sessionModal.value = false) : (sessionModal.value = true)
+  }
 }
 
 watchEffect(() => {
-  if (timerSessionSeconds.value === 1) {
-    if (!expectedLastSession.value) {
+  if (timerSessionSeconds.value === 1 && !expectedLastSession.value) {
+    ;(async () => {
+      handleSubmit(null, true)
       refetchHiddenWord()
       playStore.incrementSession()
       playStore.clearSessionModal()
       sessionModal.value = false
-    }
+    })()
   }
 })
 
@@ -244,23 +364,42 @@ watchEffect(() => {
   if (timerSeconds.value === 0 && expectedLastSession.value) {
     sessionModal.value = false
     lastModal.value = true
+    updateArrayWithEmptyItems()
+    playStore.clearSection()
   }
 })
 
 onMounted(() => {
   window.onpopstate = () => {
     router.push(ROUTES.LEADERBOARD)
+    if (expectedLastSession.value && playStore.getPlayedSession() === playStore.getSession()) {
+      resetPlayState()
+    }
   }
 })
 
 onBeforeUnmount(() => {
   window.onpopstate = null
 })
+
+const sandRef = ref(null)
+
+// watch(timerSessionSeconds, (newVal) => {
+//   if (!sandRef.value) return
+
+//   const percentage =
+//     ((getHiddenWord.value?.cycleTime - newVal) / getHiddenWord.value?.cycleTime) * 360
+//   const topSand = sandRef.value.querySelector('::before')
+//   const bottomSand = sandRef.value.querySelector('::after')
+//   const bg = `linear-gradient(#ff3d00 ${percentage}, transparent 0)`
+//   sandRef.value.style.background = bg
+//   sandRef.value.style.setProperty('--sand-progress', percentage)
+// })
 </script>
 
 <template>
   <main class="container">
-    <div v-if="isTimeloading || isHiddenWordLoading || isMcqLoading">
+    <div v-if="isPageLoading">
       <Loader />
     </div>
 
@@ -273,7 +412,9 @@ onBeforeUnmount(() => {
         {{ getHiddenWord?.question ?? 'Find The Hidden Word?' }}
       </v-typography>
 
-      <v-typography variants="h6" class="text-subtitle-1 P"> Level 01 of 07 </v-typography>
+      <v-typography variants="h6" class="text-subtitle-1 P">
+        Level 0{{ playStore.getLevel() }} of 07
+      </v-typography>
 
       <div v-if="!animationActive" class="find-word">
         <v-form fast-fail @submit.prevent="handleSubmit" class="find-word-opt">
@@ -286,7 +427,14 @@ onBeforeUnmount(() => {
             ></v-checkbox>
           </div>
 
-          <Button type="submit" buttonText="Submit" append-icon="mdi-arrow-right" />
+          <Button
+            type="submit"
+            buttonText="Submit"
+            append-icon="mdi-arrow-right"
+            v-if="playStore.getSelectedOpt()"
+            :disabled="isPlayAddingLoader"
+            :isLoading="isPlayAddingLoader"
+          />
         </v-form>
       </div>
 
@@ -302,7 +450,7 @@ onBeforeUnmount(() => {
         :close-on-outside-click="false"
       >
         <template #prependIcon>
-          <span class="my-loader"></span>
+          <span ref="sandRef" class="my-loader" aria-hidden="true"></span>
         </template>
 
         <template #title>
@@ -340,7 +488,7 @@ onBeforeUnmount(() => {
 
         <div class="modal-footer-btn">
           <Button buttonText="Play The Again Level" />
-          <Button buttonText="Finish" @click="leaveHandle" />
+          <Button buttonText="Finish" @click="leaveHandle('leave')" />
         </div>
       </Modal>
 
@@ -360,15 +508,19 @@ onBeforeUnmount(() => {
 
         <div class="modal-footer-btn">
           <Button buttonText="Play Again" />
-          <Button buttonText="Next Level" />
-          <Button buttonText="Exit" @click="leaveHandle" />
+          <Button buttonText="Next Level" @click="leaveHandle('next')" />
+          <Button buttonText="Exit" @click="leaveHandle('leave')" />
         </div>
       </Modal>
 
       <!-- didn't respond -->
       <Modal
         v-model="lastModal"
-        v-if="timerSeconds === 0"
+        v-if="
+          timerSeconds === 0 &&
+          expectedLastSession &&
+          playStore.getPlayedSession() !== playStore.getSession()
+        "
         @agree="() => gamePlay('leave')"
         max-width="500"
         :close-on-outside-click="false"
@@ -382,8 +534,8 @@ onBeforeUnmount(() => {
         </p>
 
         <div class="modal-footer-btn">
-          <Button buttonText="Play Again" />
-          <Button buttonText="Exit" @click="leaveHandle" />
+          <Button buttonText="Play Again" @click="leaveHandle('playAgain')" />
+          <Button buttonText="Exit" @click="leaveHandle('leave')" />
         </div>
       </Modal>
     </div>

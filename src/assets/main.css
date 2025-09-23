@@ -64,6 +64,7 @@
   border-radius: 20px 20px 0 0;
   animation: lqb 5s linear infinite;
 }
+
 @keyframes lqt {
   0%,
   100% {
@@ -79,6 +80,7 @@
     background-position: 0% -40px;
   }
 }
+
 @keyframes lqb {
   0% {
     background-image: linear-gradient(#ff3d00 40px, transparent 0);
