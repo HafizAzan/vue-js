@@ -34,7 +34,6 @@ export const usePlayStore = defineStore('play', {
     clearSection() {
       const key = this.buildKey(`section_level-${this.getLevel()}`)
       if (!key) return null
-      console.log(this.data[key], 'clear secton')
       delete this.data[key]
     },
 

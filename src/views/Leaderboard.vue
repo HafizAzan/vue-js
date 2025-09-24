@@ -195,7 +195,7 @@ watch(
 
     if (allAnswered && sessions.length === expectedSessions) {
       playStore.setLevel(isLatestLevel + 1)
-    } else if (!allAnswered) {
+    } else {
       playStore.setLevel(isLatestLevel)
     }
   },
@@ -203,10 +203,10 @@ watch(
 )
 
 const ButtonText = () => {
-  if (playStore.getLevel() >= 7) return 'Finish'
+  if (playStore.getLevel() > 7) return 'Finish'
   if (isCompleteSession.value) return 'Play Next'
-  else if (!findMinimumOnePlay) return 'Resume'
-  else return 'Play'
+  if (findMinimumOnePlay) return 'Play'
+  else return 'Resume'
 }
 </script>
 
@@ -219,7 +219,7 @@ const ButtonText = () => {
         <Button
           :buttonText="ButtonText()"
           @click="() => gamePlay('play-next')"
-          :disabled="playStore.getLevel() >= 7"
+          :disabled="playStore.getLevel() > 7"
         />
 
         <DropDownVue

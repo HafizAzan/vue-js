@@ -30,6 +30,7 @@ import Loader from '@/components/Loader.vue'
 import Button from '@/components/Button.vue'
 import Modal from '@/components/Modal.vue'
 import { toast } from 'vue-sonner'
+import Animation from '@/components/Animation.vue'
 
 const { token } = useUserStore()
 const playStore = usePlayStore()
@@ -40,6 +41,10 @@ const animationActive = ref(true)
 const isAssigningSection = ref(true)
 const shouldRefetchUsers = ref(true)
 const controllValues = reactive({ values: [] })
+const sessionSubmitted = ref({})
+const lastSessionTriggered = ref(false)
+const isSectionReady = ref(false)
+const saveValue = ref(null)
 
 // API CALLS
 const { data: getTime, isLoading: isTimeloading } = useQuery({
@@ -109,7 +114,8 @@ const isPageLoading = computed(
     isTimeloading.value ||
     isHiddenWordLoading.value ||
     isMcqLoading.value ||
-    isAssigningSection.value,
+    isAssigningSection.value ||
+    !isSectionReady.value,
 )
 
 const paused = computed(() => isPageLoading.value)
@@ -154,6 +160,8 @@ const getHiddenWord = computed(() => ({
 const totalCount = computed(() => getTime?.value?.time?.overAllTime ?? 0)
 const animationTime = computed(() => getTime?.value?.time?.animationTime ?? 30)
 const animationStopTime = computed(() => getTime?.value?.time?.animationStopTime ?? 30)
+const animationFrequency = computed(() => getTime?.value?.time?.animationFrequency ?? 30)
+
 const getAllTimeData = computed(() => ({
   overAllTime: formatTime(timerSeconds.value),
   animationStopTime: animationStopTime.value,
@@ -187,13 +195,16 @@ watch(
   ([items, section, loading]) => {
     if (loading) return
 
-    if (items.length) {
-      playStore.setSection(section)
+    if (items?.length > 0) {
       controllValues.values = items.map((item) => parseFloat(item))
-      if (section) playStore.setSection(section)
-      else playStore.clearSection()
-      isAssigningSection.value = false
+      playStore.setSection(section)
+      isSectionReady.value = true
+    } else {
+      playStore.clearSection()
+      isSectionReady.value = false
     }
+
+    isAssigningSection.value = false
   },
   { immediate: true },
 )
@@ -203,14 +214,16 @@ watch(
   async ([items, userLoading, valueLoading, allUsersLoading]) => {
     if (userLoading || valueLoading || allUsersLoading) return
 
-    if (shouldRefetchUsers.value) {
-      await refetchAllUser()
-    }
-
-    if (items?.length > 0 || playStore.getSection()) {
+    if ((items?.length > 0 || playStore.getSection()) && !isAssigningSection.value) {
       isAssigningSection.value = false
       return
     }
+
+    if (shouldRefetchUsers.value) {
+      await refetchAllUser()
+      shouldRefetchUsers.value = false
+    }
+    console.log('working,,....')
 
     const availableSectionsForUser = (allValuesForUsers.value ?? []).filter(
       (single) =>
@@ -222,24 +235,24 @@ watch(
           .includes(single.section),
     )
 
-    const FindOneSectionWithItems = availableSectionsForUser[0]
+    const firstAvailable = availableSectionsForUser[0]
 
-    if (FindOneSectionWithItems) {
+    if (firstAvailable) {
       isAssigningSection.value = true
       try {
         await updateUser({
-          items: FindOneSectionWithItems.items,
-          section: FindOneSectionWithItems.section,
+          items: firstAvailable.items,
+          section: firstAvailable.section,
         })
-
-        shouldRefetchUsers.value = false
-        playStore.setSection(FindOneSectionWithItems.section)
-        controllValues.values = FindOneSectionWithItems.items
+        playStore.setSection(firstAvailable.section)
+        controllValues.values = firstAvailable.items
+        isSectionReady.value = true
       } finally {
         isAssigningSection.value = false
       }
     } else {
       isAssigningSection.value = false
+      isSectionReady.value = false
     }
   },
   { immediate: true },
@@ -291,6 +304,8 @@ const resetPlayState = () => {
 
 const leaveHandle = (type) => {
   resetPlayState()
+  shouldRefetchUsers.value = true
+
   if (type === 'playAgain') {
     router.push(ROUTES.DOOR)
   } else if (type === 'leave') router.push(ROUTES.LEADERBOARD)
@@ -304,22 +319,39 @@ const handleCheckBox = (single) => {
   playStore.setSelectedOpt(playStore.getSelectedOpt() === single ? null : single)
 }
 
-const handleSubmit = async (e, isAuto = false) => {
-  e?.preventDefault?.()
-  await nextTick()
+function calculateCompletionData({ isAuto = false }) {
+  const selectedOption = playStore.getSelectedOpt?.()
+  const hiddenWord = getHiddenWord?.value?.hiddenWord
+  const isCorrect = selectedOption === hiddenWord
 
-  const isCorrect = playStore.getSelectedOpt() === getHiddenWord?.value?.hiddenWord
+  const cycleTimeInSeconds = getHiddenWord?.value?.cycleTime ?? 0
+  const cycleDuration = cycleTimeInSeconds * 1000
 
-  const cycleDuration = getHiddenWord?.value?.cycleTime * 1000
-  const timePassed = (totalCount.value * 60 - timerSeconds.value) * 1000
+  const totalSecondsPassed = totalCount.value * 60 - timerSeconds.value
+  const timePassed = totalSecondsPassed * 1000
   const timeInCycle = timePassed % cycleDuration
+
   const timeTaken = isAuto
     ? 0
     : timeInCycle <= cycleDuration
       ? Math.floor(timeInCycle / 1000)
-      : getHiddenWord?.value?.cycleTime
+      : cycleTimeInSeconds
 
-  const updatedCompleteTime = (playStore.getCompleteTime?.() ?? 0) + (isAuto ? 0 : timeTaken)
+  const previousCompleteTime = playStore.getCompleteTime?.() ?? 0
+  const updatedCompleteTime = previousCompleteTime + timeTaken
+
+  return {
+    isCorrect,
+    timeTaken,
+    updatedCompleteTime,
+  }
+}
+
+const handleSubmit = async (e) => {
+  e?.preventDefault?.()
+  await nextTick()
+
+  const { isCorrect, timeTaken, updatedCompleteTime } = calculateCompletionData({ isAuto: false })
 
   const body = {
     userId: token?._id,
@@ -329,9 +361,9 @@ const handleSubmit = async (e, isAuto = false) => {
     completeTime: updatedCompleteTime,
     sessions: [
       {
-        session: isAuto ? playStore.getSession() - 1 : playStore.getSession(),
-        answer: playStore.getSelectedOpt() ?? 'null',
-        isCorrect: isCorrect ?? false,
+        session: playStore.getSession(),
+        answer: playStore.getSelectedOpt(),
+        isCorrect,
         score: 10,
         time: timeTaken,
       },
@@ -342,30 +374,89 @@ const handleSubmit = async (e, isAuto = false) => {
   if (!res?.error) {
     toast.success('Add session SuccessFully!')
     playStore.setCompleteTime(updatedCompleteTime)
-    isAuto ? 0 : playStore.incrementPlayedSession()
+    playStore.incrementPlayedSession()
     playStore.setSelectedOpt(null)
-    isAuto ? (sessionModal.value = false) : (sessionModal.value = true)
+    sessionModal.value = true
+    sessionSubmitted.value[playStore.getSession()] = true
+  }
+}
+
+const autoSubmit = async (currentSection = null) => {
+  await nextTick()
+  const sectionToSend = currentSection || playStore.getSection()
+  const { isCorrect, timeTaken, updatedCompleteTime } = calculateCompletionData({ isAuto: true })
+
+  const body = {
+    userId: token?._id,
+    level: playStore.getLevel(),
+    section: sectionToSend,
+    score: 20,
+    completeTime: updatedCompleteTime,
+    sessions: [
+      {
+        session: playStore.getSession(),
+        answer: 'null',
+        isCorrect,
+        score: 10,
+        time: timeTaken,
+      },
+    ],
+  }
+
+  const res = await addPlayData(body)
+  if (!res?.error) {
+    playStore.setCompleteTime(updatedCompleteTime)
+    sessionModal.value = false
+    sessionSubmitted.value[playStore.getSession()] = false
   }
 }
 
 watchEffect(() => {
   if (timerSessionSeconds.value === 1 && !expectedLastSession.value) {
-    ;(async () => {
-      handleSubmit(null, true)
+    const currentSession = playStore.getSession()
+    const sectionToSend = playStore.getSection()
+
+    if (!sessionSubmitted.value[currentSession]) {
+      ;(async () => {
+        await autoSubmit(sectionToSend)
+        await refetchHiddenWord()
+        playStore.incrementSession()
+        playStore.clearSessionModal()
+        sessionModal.value = false
+      })()
+    } else {
+      sessionSubmitted.value[currentSession] = false
       refetchHiddenWord()
       playStore.incrementSession()
       playStore.clearSessionModal()
       sessionModal.value = false
-    })()
+    }
   }
 })
 
 watchEffect(() => {
-  if (timerSeconds.value === 0 && expectedLastSession.value) {
-    sessionModal.value = false
-    lastModal.value = true
-    updateArrayWithEmptyItems()
-    playStore.clearSection()
+  if (timerSeconds.value === 0 && expectedLastSession.value && !lastSessionTriggered.value) {
+    lastSessionTriggered.value = true
+
+    const currentSession = playStore.getSession()
+    const sectionToSend = playStore.getSection()
+
+    ;(async () => {
+      if (!sessionSubmitted.value[currentSession]) {
+        await autoSubmit(sectionToSend)
+      }
+
+      sessionModal.value = false
+      lastModal.value = true
+
+      setTimeout(() => {
+        updateArrayWithEmptyItems().then(() => {
+          shouldRefetchUsers.value = true
+          playStore.clearSection()
+          isSectionReady.value = true
+        })
+      }, 500)
+    })()
   }
 })
 
@@ -381,20 +472,6 @@ onMounted(() => {
 onBeforeUnmount(() => {
   window.onpopstate = null
 })
-
-const sandRef = ref(null)
-
-// watch(timerSessionSeconds, (newVal) => {
-//   if (!sandRef.value) return
-
-//   const percentage =
-//     ((getHiddenWord.value?.cycleTime - newVal) / getHiddenWord.value?.cycleTime) * 360
-//   const topSand = sandRef.value.querySelector('::before')
-//   const bottomSand = sandRef.value.querySelector('::after')
-//   const bg = `linear-gradient(#ff3d00 ${percentage}, transparent 0)`
-//   sandRef.value.style.background = bg
-//   sandRef.value.style.setProperty('--sand-progress', percentage)
-// })
 </script>
 
 <template>
@@ -416,30 +493,43 @@ const sandRef = ref(null)
         Level 0{{ playStore.getLevel() }} of 07
       </v-typography>
 
-      <div v-if="!animationActive" class="find-word">
-        <v-form fast-fail @submit.prevent="handleSubmit" class="find-word-opt">
-          <div v-for="(single, index) in getHiddenWord?.options" :key="single._id || index">
-            <v-checkbox
-              class="check-box-label"
-              :label="single"
-              :model-value="playStore.getSelectedOpt() === single"
-              @update:model-value="handleCheckBox(single)"
-            ></v-checkbox>
-          </div>
+      <div class="one-row-with-animation">
+        <div class="find-word-form">
+          <v-form
+            fast-fail
+            @submit.prevent="handleSubmit"
+            class="find-word-opt"
+            v-if="!animationActive"
+          >
+            <div v-for="(single, index) in getHiddenWord?.options" :key="single._id || index">
+              <v-checkbox
+                class="check-box-label"
+                :label="single"
+                :model-value="playStore.getSelectedOpt() === single"
+                @update:model-value="handleCheckBox(single)"
+              ></v-checkbox>
+            </div>
 
-          <Button
-            type="submit"
-            buttonText="Submit"
-            append-icon="mdi-arrow-right"
-            v-if="playStore.getSelectedOpt()"
-            :disabled="isPlayAddingLoader"
-            :isLoading="isPlayAddingLoader"
+            <Button
+              type="submit"
+              buttonText="Submit"
+              append-icon="mdi-arrow-right"
+              v-if="playStore.getSelectedOpt()"
+              :disabled="isPlayAddingLoader"
+              :isLoading="isPlayAddingLoader"
+            />
+          </v-form>
+        </div>
+
+        <div>
+          <Animation
+            :level="playStore.getLevel()"
+            :element="animationFrequency"
+            :is-candle-on="animationActive"
+            :array-values="controllValues.values"
+            :values="saveValue"
           />
-        </v-form>
-      </div>
-
-      <div v-else>
-        <h1>candle aaye gi</h1>
+        </div>
       </div>
 
       <!-- session modal -->
@@ -450,7 +540,7 @@ const sandRef = ref(null)
         :close-on-outside-click="false"
       >
         <template #prependIcon>
-          <span ref="sandRef" class="my-loader" aria-hidden="true"></span>
+          <span class="my-loader" aria-hidden="true"></span>
         </template>
 
         <template #title>
@@ -547,6 +637,11 @@ const sandRef = ref(null)
   display: flex;
   flex-direction: column;
   gap: 20px;
+  width: 100%;
+}
+
+.find-word-form {
+  width: 560px;
 }
 
 .find-word-opt {
@@ -555,7 +650,7 @@ const sandRef = ref(null)
   column-gap: 50px;
   color: white;
   font-size: 20px;
-  max-width: 30%;
+  max-width: 100%;
 }
 
 .find-word-opt > div {
@@ -583,5 +678,11 @@ const sandRef = ref(null)
   gap: 20px;
   align-items: center;
   margin-top: 10px;
+}
+
+.one-row-with-animation {
+  display: flex;
+  justify-content: space-between;
+  width: 95%;
 }
 </style>
