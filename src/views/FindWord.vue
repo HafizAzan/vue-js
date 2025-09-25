@@ -1,6 +1,6 @@
 <script setup>
 import { nextTick, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watchEffect } from 'vue'
 import { useMutation, useQuery } from '@tanstack/vue-query'
 import { ROUTES } from '@/router'
@@ -35,8 +35,10 @@ import Animation from '@/components/Animation.vue'
 const { token } = useUserStore()
 const playStore = usePlayStore()
 const router = useRouter()
+const route = useRoute()
 
 // states
+const playAgainLevel = route.query.playAgain
 const animationActive = ref(true)
 const isAssigningSection = ref(true)
 const shouldRefetchUsers = ref(true)
@@ -189,7 +191,20 @@ const lastModal = computed({
   set: (val) => playStore.setLastModal(val),
 })
 
+const messageText = computed(() => {
+  if (expectedLastSession.value) {
+    return playAgainLevel
+      ? `You Better play prev level 0${playAgainLevel} Wait ${timerSessionSeconds.value} sec`
+      : `Next Level Start in ${timerSessionSeconds.value} sec`
+  }
+  return ''
+})
+
 // Watchers
+watch(saveValue, (newVal) => {
+  console.log(newVal, 'from animation.vue')
+})
+
 watch(
   [userItems, userSection, isSingleUserLoading],
   ([items, section, loading]) => {
@@ -212,7 +227,9 @@ watch(
 watch(
   [userItems, isSingleUserLoading, isValueLoading, isAllUsersLoading],
   async ([items, userLoading, valueLoading, allUsersLoading]) => {
-    if (userLoading || valueLoading || allUsersLoading) return
+    if (userLoading || valueLoading || allUsersLoading || isAssigningSection.value) {
+      return
+    }
 
     if ((items?.length > 0 || playStore.getSection()) && !isAssigningSection.value) {
       isAssigningSection.value = false
@@ -223,7 +240,6 @@ watch(
       await refetchAllUser()
       shouldRefetchUsers.value = false
     }
-    console.log('working,,....')
 
     const availableSectionsForUser = (allValuesForUsers.value ?? []).filter(
       (single) =>
@@ -237,22 +253,26 @@ watch(
 
     const firstAvailable = availableSectionsForUser[0]
 
-    if (firstAvailable) {
-      isAssigningSection.value = true
-      try {
-        await updateUser({
-          items: firstAvailable.items,
-          section: firstAvailable.section,
-        })
-        playStore.setSection(firstAvailable.section)
-        controllValues.values = firstAvailable.items
-        isSectionReady.value = true
-      } finally {
-        isAssigningSection.value = false
-      }
-    } else {
-      isAssigningSection.value = false
+    if (!firstAvailable) {
       isSectionReady.value = false
+      return
+    }
+
+    isAssigningSection.value = true
+
+    try {
+      await updateUser({
+        items: firstAvailable.items,
+        section: firstAvailable.section,
+      })
+
+      playStore.setSection(firstAvailable.section)
+      controllValues.values = firstAvailable.items
+      isSectionReady.value = true
+    } catch (e) {
+      throw e
+    } finally {
+      isAssigningSection.value = false
     }
   },
   { immediate: true },
@@ -307,7 +327,9 @@ const leaveHandle = (type) => {
   shouldRefetchUsers.value = true
 
   if (type === 'playAgain') {
-    router.push(ROUTES.DOOR)
+    playAgainLevel
+      ? router.push(`${ROUTES.DOOR}?playAgain=${playAgainLevel}`)
+      : router.push(ROUTES.DOOR)
   } else if (type === 'leave') router.push(ROUTES.LEADERBOARD)
   else if (type === 'next') {
     router.push(ROUTES.DOOR)
@@ -355,7 +377,7 @@ const handleSubmit = async (e) => {
 
   const body = {
     userId: token?._id,
-    level: playStore.getLevel(),
+    level: playAgainLevel ?? playStore.getLevel(),
     section: playStore.getSection(),
     score: 20,
     completeTime: updatedCompleteTime,
@@ -388,7 +410,7 @@ const autoSubmit = async (currentSection = null) => {
 
   const body = {
     userId: token?._id,
-    level: playStore.getLevel(),
+    level: playAgainLevel ?? playStore.getLevel(),
     section: sectionToSend,
     score: 20,
     completeTime: updatedCompleteTime,
@@ -521,14 +543,17 @@ onBeforeUnmount(() => {
           </v-form>
         </div>
 
-        <div>
+        <div class="main-animation-container">
           <Animation
-            :level="playStore.getLevel()"
+            :level="playAgainLevel ?? playStore.getLevel()"
             :element="animationFrequency"
             :is-candle-on="animationActive"
             :array-values="controllValues.values"
-            :values="saveValue"
+            v-model:saveValue="saveValue"
+            :is-end="isEnd"
           />
+
+          <p class="hidden-word">{{ getHiddenWord.hiddenWord }}</p>
         </div>
       </div>
 
@@ -548,7 +573,7 @@ onBeforeUnmount(() => {
         </template>
 
         <p class="modal-main-text text-gray-700 text-center" v-if="expectedLastSession">
-          Next Level Start in {{ timerSessionSeconds }} sec
+          {{ messageText }}
         </p>
 
         <p class="modal-main-text text-gray-700 text-center" v-else>
@@ -594,12 +619,16 @@ onBeforeUnmount(() => {
           <p class="modal-main-title">That's Great</p>
         </template>
 
-        <p class="modal-main-text text-gray-700 text-center">Congratulations! Gate completed.</p>
+        <p class="modal-main-text text-gray-700 text-center">Congratulations! Level completed.</p>
 
-        <div class="modal-footer-btn">
-          <Button buttonText="Play Again" />
+        <div class="modal-footer-btn" v-if="!playAgainLevel">
+          <Button buttonText="Play Again" @click="leaveHandle('playAgain')" />
           <Button buttonText="Next Level" @click="leaveHandle('next')" />
           <Button buttonText="Exit" @click="leaveHandle('leave')" />
+        </div>
+        <div class="modal-footer-btn" v-else>
+          <Button buttonText="Play The Again Level" @click="leaveHandle('playAgain')" />
+          <Button buttonText="Finish" @click="leaveHandle('leave')" />
         </div>
       </Modal>
 
@@ -683,6 +712,20 @@ onBeforeUnmount(() => {
 .one-row-with-animation {
   display: flex;
   justify-content: space-between;
-  width: 95%;
+  width: 90%;
+}
+
+.main-animation-container {
+  position: relative;
+}
+
+.hidden-word {
+  font-size: 22px;
+  color: white;
+  font-weight: 700;
+  position: absolute;
+  top: 0px;
+  left: 65px;
+  text-transform: capitalize;
 }
 </style>

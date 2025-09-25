@@ -91,6 +91,24 @@ export const usePlayStore = defineStore('play', {
       delete this.data[key]
     },
 
+    setStartIndex(value) {
+      const key = this.buildKey(`startIndex_level-${this.getLevel()}`)
+      if (!key) return null
+      this.data[key] = value
+    },
+
+    getStartIndex() {
+      const key = this.buildKey(`startIndex_level-${this.getLevel()}`)
+      if (!key) return 0
+      return this.data[key] ?? 0
+    },
+
+    clearStartIndex() {
+      const key = this.buildKey(`startIndex_level-${this.getLevel()}`)
+      if (!key) return null
+      delete this.data[key]
+    },
+
     // ========================
     // 📌 LEVEL
     // ========================

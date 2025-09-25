@@ -2,22 +2,31 @@
 import Button from '@/components/Button.vue'
 import { ROUTES } from '@/router'
 import { usePlayStore } from '@/store/usePlayStore'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 
 const router = useRouter()
+const route = useRoute()
 const playStore = usePlayStore()
+const level = route.query.playAgain
 
-const navigate = () => router.push(ROUTES.FIND_WORD)
+const navigate = () => {
+  if (level) {
+    router.push(`${ROUTES.FIND_WORD}?playAgain=${level}`)
+    playStore.setLevel(level)
+  } else {
+    router.push(ROUTES.FIND_WORD)
+  }
+}
 </script>
 
 <template>
   <main class="main-door container">
     <v-typography variants="h2" class="text-h2 h2"
       >Each Flame Holds a Clue <br />
-      Enter Level 0{{ playStore.getLevel() }}</v-typography
+      Enter Level 0{{ level ?? playStore.getLevel() }}</v-typography
     >
     <Button
-      :buttonText="`Enter Level 0${playStore.getLevel()}`"
+      :buttonText="`Enter Level 0${level ?? playStore.getLevel()}`"
       appendIcon="mdi-arrow-right"
       @click="() => navigate()"
     />
