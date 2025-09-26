@@ -101,3 +101,39 @@ export function useTimer(
 
   return timeLeft
 }
+
+export const calculateFlame = (
+  arrayValues,
+  frequency,
+  flameOn,
+  flameOff,
+  elapsedTime,
+  totalDuration,
+) => {
+  const controlData = arrayValues
+
+  const flameOnLength = Math.floor(frequency * flameOn)
+  const flameOffLength = Math.floor(frequency * flameOff)
+  const totalWindow = flameOnLength + flameOffLength
+
+  const sessionLength = flameOn + flameOff
+
+  const timePassed = totalDuration - elapsedTime
+  const currentSessionIndex = Math.floor(timePassed / sessionLength)
+
+  const startIndex = currentSessionIndex * totalWindow
+  const endIndex = startIndex + totalWindow
+
+  const flameOnSlice = controlData.slice(startIndex, startIndex + flameOnLength)
+  const flameOffSlice = controlData.slice(startIndex + flameOnLength, endIndex)
+
+  const sum = (arr) => arr.reduce((acc, val) => acc + Number(val || 0), 0)
+
+  const flameOnSum = sum(flameOnSlice)
+  const flameOffSum = sum(flameOffSlice)
+  const result = flameOnSum - flameOffSum
+
+  return {
+    points: result,
+  }
+}

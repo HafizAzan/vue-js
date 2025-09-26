@@ -1,5 +1,6 @@
 <script setup>
 import { useAttrs } from 'vue'
+import click from '@/assets/music/click.mp3'
 
 const emit = defineEmits(['click'])
 const attr = useAttrs()
@@ -31,6 +32,12 @@ const props = defineProps({
 })
 
 function handleClick(event) {
+  const audio = new Audio(click)
+  audio.volume = 0.5
+  audio.play().catch((err) => {
+    console.warn('Click sound could not play:', err)
+  })
+
   emit('click', event)
 }
 </script>

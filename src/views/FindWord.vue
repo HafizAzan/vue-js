@@ -19,7 +19,7 @@ import {
 import { addPlayUser } from '../utils/api-service'
 
 // constant
-import { formatTime, useTimer } from '@/utils/constant'
+import { calculateFlame, formatTime, useTimer } from '@/utils/constant'
 
 // pinia store
 import { usePlayStore } from '@/store/usePlayStore'
@@ -38,7 +38,7 @@ const router = useRouter()
 const route = useRoute()
 
 // states
-const playAgainLevel = route.query.playAgain
+const playAgainLevel = Number(route.query.playAgain)
 const animationActive = ref(true)
 const isAssigningSection = ref(true)
 const shouldRefetchUsers = ref(true)
@@ -194,7 +194,7 @@ const lastModal = computed({
 const messageText = computed(() => {
   if (expectedLastSession.value) {
     return playAgainLevel
-      ? `You Better play prev level 0${playAgainLevel} Wait ${timerSessionSeconds.value} sec`
+      ? `Level 0${playAgainLevel} is already completed! But you played again Wait ${timerSessionSeconds.value} sec`
       : `Next Level Start in ${timerSessionSeconds.value} sec`
   }
   return ''
@@ -215,8 +215,10 @@ watch(
       playStore.setSection(section)
       isSectionReady.value = true
     } else {
-      playStore.clearSection()
-      isSectionReady.value = false
+      if (!playStore.getSection()) {
+        playStore.clearSection()
+        isSectionReady.value = false
+      }
     }
 
     isAssigningSection.value = false
@@ -369,33 +371,54 @@ function calculateCompletionData({ isAuto = false }) {
   }
 }
 
+const calculateScoreData = ({ isAuto = false, score = 0 }) => {
+  const previousCalculateScore = playStore.getCalculateScore() ?? 0
+  const updatedCalculateScore = isAuto ? previousCalculateScore : previousCalculateScore + score
+
+  return {
+    updatedCalculateScore,
+  }
+}
+
 const handleSubmit = async (e) => {
   e?.preventDefault?.()
   await nextTick()
 
   const { isCorrect, timeTaken, updatedCompleteTime } = calculateCompletionData({ isAuto: false })
+  const { points } = calculateFlame(
+    controllValues.values,
+    animationFrequency.value,
+    animationTime.value,
+    animationStopTime.value,
+    timerSeconds.value,
+    totalCount.value * 60,
+  )
+
+  const { updatedCalculateScore } = calculateScoreData({ isAuto: false, score: points })
 
   const body = {
     userId: token?._id,
     level: playAgainLevel ?? playStore.getLevel(),
     section: playStore.getSection(),
-    score: 20,
+    score: updatedCalculateScore,
     completeTime: updatedCompleteTime,
     sessions: [
       {
         session: playStore.getSession(),
         answer: playStore.getSelectedOpt(),
         isCorrect,
-        score: 10,
+        score: points,
         time: timeTaken,
       },
     ],
   }
 
   const res = await addPlayData(body)
+  console.log(res, 'res handler')
   if (!res?.error) {
     toast.success('Add session SuccessFully!')
     playStore.setCompleteTime(updatedCompleteTime)
+    playStore.setCalculateScore(updatedCalculateScore)
     playStore.incrementPlayedSession()
     playStore.setSelectedOpt(null)
     sessionModal.value = true
@@ -407,32 +430,67 @@ const autoSubmit = async (currentSection = null) => {
   await nextTick()
   const sectionToSend = currentSection || playStore.getSection()
   const { isCorrect, timeTaken, updatedCompleteTime } = calculateCompletionData({ isAuto: true })
+  const { points } = calculateFlame(
+    controllValues.values,
+    animationFrequency.value,
+    animationTime.value,
+    animationStopTime.value,
+    timerSeconds.value,
+    totalCount.value * 60,
+  )
+
+  const { updatedCalculateScore } = calculateScoreData({ isAuto: true, score: points })
 
   const body = {
     userId: token?._id,
     level: playAgainLevel ?? playStore.getLevel(),
     section: sectionToSend,
-    score: 20,
+    score: updatedCalculateScore,
     completeTime: updatedCompleteTime,
     sessions: [
       {
         session: playStore.getSession(),
         answer: 'null',
         isCorrect,
-        score: 10,
+        score: points,
         time: timeTaken,
       },
     ],
   }
 
   const res = await addPlayData(body)
+  console.log(res, 'res auto')
   if (!res?.error) {
     playStore.setCompleteTime(updatedCompleteTime)
+    playStore.setCalculateScore(updatedCalculateScore)
     sessionModal.value = false
     sessionSubmitted.value[playStore.getSession()] = false
   }
 }
 
+const getBlur = () => {
+  const candleOn = computed(() => animationActive.value)
+  const isFading = computed(() => saveValue.value)
+
+  if (!candleOn.value) {
+    return { filter: `blur(3px)`, opacity: 0, userSelect: 'text' }
+  }
+
+  const brightness = typeof isFading.value === 'number' ? isFading.value : 1
+  const clamped = Math.max(0, Math.min(1, brightness))
+
+  const baseBlur = 3
+  const blurAmount = baseBlur + clamped * 4
+
+  return {
+    filter: `blur(${blurAmount.toFixed(2)}px)`,
+    opacity: (0.9 - clamped * 0.1).toFixed(2),
+    userSelect: 'none',
+    pointerEvents: 'none',
+  }
+}
+
+//watcher
 watchEffect(() => {
   if (timerSessionSeconds.value === 1 && !expectedLastSession.value) {
     const currentSession = playStore.getSession()
@@ -553,7 +611,17 @@ onBeforeUnmount(() => {
             :is-end="isEnd"
           />
 
-          <p class="hidden-word">{{ getHiddenWord.hiddenWord }}</p>
+          <p
+            :class="
+              (playAgainLevel || playStore.getLevel()) === 2
+                ? 'hidden-word-two-level'
+                : 'hidden-word'
+            "
+            :style="getBlur()"
+            v-if="!isEnd"
+          >
+            {{ getHiddenWord.hiddenWord }}
+          </p>
         </div>
       </div>
 
@@ -610,7 +678,11 @@ onBeforeUnmount(() => {
       <!-- gate completed (not last level) -->
       <Modal
         v-model="lastModal"
-        v-if="playStore.getPlayedSession() === playStore.getSession() && expectedLastSession"
+        v-if="
+          playStore.getPlayedSession() === playStore.getSession() &&
+          expectedLastSession &&
+          playStore.getLevel() !== 7
+        "
         @agree="() => gamePlay('leave')"
         max-width="500"
         :close-on-outside-click="false"
@@ -727,5 +799,17 @@ onBeforeUnmount(() => {
   top: 0px;
   left: 65px;
   text-transform: capitalize;
+  transition: all ease 200ms;
+}
+
+.hidden-word-two-level {
+  font-size: 22px;
+  color: white;
+  font-weight: 700;
+  position: absolute;
+  top: 105px;
+  left: 75px;
+  text-transform: capitalize;
+  transition: all ease 200ms;
 }
 </style>

@@ -20,6 +20,7 @@ const useFlameAnimation = ({
 
   const applyFlameState = (value) => {
     startFlameAnimation(value)
+    console.log(value, 'val')
     if (!flameOn.value) {
       clearTimeout(updateTimer.value)
       return

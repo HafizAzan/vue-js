@@ -10,7 +10,7 @@ const props = defineProps({
   isTimerEnd: Boolean,
 })
 
-const emit = defineEmits(['update:values', 'update:isCanldeOn'])
+const emit = defineEmits(['update:values', 'update:isCandleOn'])
 const { isCandleOn, element, arrayValues, values } = toRefs(props)
 
 const candleRef = ref(isCandleOn.value)
@@ -48,7 +48,7 @@ const startFlameAnimation = (value) => {
   flame.value.style.height = `${computedHeight}px`
   shadow.value.style.height = `${computedHeight}px`
 
-  const baseTop = -100
+  const baseTop = -110
   const topOffset = maxHeight - computedHeight
   const dynamicTop = baseTop + topOffset
 
@@ -74,7 +74,7 @@ useFlameAnimation({
       <div class="top" ref="top" v-if="showFlame"></div>
       <div class="flame" ref="flame" v-if="showFlame"></div>
       <div class="wick"></div>
-      <div class="flame-bottom" v-if="!showFlame"></div>
+      <div class="flame-bottom"></div>
     </div>
   </div>
 </template>
@@ -127,7 +127,7 @@ useFlameAnimation({
 
 .flame {
   position: absolute;
-  top: -100px;
+  top: -110px;
   width: 20px;
   height: 80px;
   background: white;
@@ -155,7 +155,7 @@ useFlameAnimation({
 
 .top {
   position: absolute;
-  top: -123px;
+  top: -128px;
   width: 20px;
   height: 80px;
   background: white;
@@ -187,7 +187,7 @@ useFlameAnimation({
   height: 25px;
   background: linear-gradient(to bottom, #3a3a3a, #000);
   border-radius: 2px;
-  z-index: 1;
+  z-index: 0;
 }
 
 .flame-shadow {
@@ -258,36 +258,6 @@ useFlameAnimation({
 
   100% {
     transform: skewX(2deg) skewY(5deg);
-  }
-}
-
-@keyframes flicker {
-  0%,
-  100% {
-    opacity: 1;
-  }
-
-  50% {
-    opacity: 0.95;
-  }
-}
-
-@keyframes flame-grow {
-  50% {
-    box-shadow:
-      0 0px 0px 3px white,
-      0 -38px 1px 2px white,
-      0 -41px 2px 3px gold,
-      0 -50px 5px 4px var(--orange),
-      0 0px 150px 10px var(--orange),
-      0 -10px 2px 4px white,
-      0 -5px 3px 3px white;
-  }
-}
-
-@keyframes blink {
-  50% {
-    opacity: 0.95;
   }
 }
 </style>

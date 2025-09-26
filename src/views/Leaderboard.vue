@@ -113,7 +113,7 @@ const FilteredLevels = computed(() => {
 })
 
 const playAgainLevels = computed(() => {
-  return Array.from({ length: playStore.getLevel() }).map((_, index) => ({
+  return Array.from({ length: playStore.getLevel() - 1 }).map((_, index) => ({
     level: `Level ${index + 1}`,
     title: `Level 0${index + 1}`,
   }))
@@ -148,6 +148,7 @@ const gamePlay = async (action) => {
     resetToken()
     await router.push(ROUTES.LOGIN)
     toast.success('You Logout Successfully!')
+    playStore.resetAll()
   } else if (['play-next', 'play', 'resume'].includes(action)) {
     try {
       await router.push(ROUTES.DOOR)
@@ -203,10 +204,13 @@ watch(
 )
 
 const ButtonText = () => {
-  if (playStore.getLevel() > 7) return 'Finish'
-  if (isCompleteSession.value) return 'Play Next'
-  if (findMinimumOnePlay) return 'Play'
-  else return 'Resume'
+  const currentLevel = playStore.getLevel()
+  const isLastLevel = currentLevel > 7
+  const isComplete = isCompleteSession.value
+  if (isComplete && isLastLevel) return 'Finish'
+  if (isComplete) return 'Play Next'
+  if (!findMinimumOnePlay) return 'Play'
+  return 'Resume'
 }
 </script>
 
@@ -260,10 +264,18 @@ const ButtonText = () => {
 
     <div v-else class="main-content-table">
       <Table :headers="headers" :items="leaderboardItems">
+        <template #item.userName="{ item }">
+          <div>
+            <span>
+              {{ item.userId === token?._id ? 'You' : item.userName }}
+            </span>
+          </div>
+        </template>
+
         <template #item.levelsCompleted="{ item }">
           <div>
             <span>
-              {{ item.levelsCompleted?.[item.levelsCompleted.length - 1] }}
+              {{ item.levelsCompleted?.[item.levelsCompleted.length - 1] ?? item.level ?? '-' }}
             </span>
           </div>
         </template>
