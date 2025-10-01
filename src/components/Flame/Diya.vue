@@ -16,8 +16,6 @@ const { isCandleOn, element, arrayValues, values } = toRefs(props)
 const candleRef = ref(isCandleOn.value)
 const frequency = ref(element.value)
 const assignSectionArray = ref(arrayValues.value)
-const top = ref(null)
-const shadow = ref(null)
 const flame = ref(null)
 
 watchEffect(() => {
@@ -30,29 +28,11 @@ watchEffect(() => {
 const startFlameAnimation = (value) => {
   values.value = value
   emit('update:values', value)
-  console.log(value, 'val')
 
   if (!flame.value) return
 
   const safeValue = Math.max(0.4, Math.min(1.2, value))
   flame.value.style.filter = `brightness(${safeValue})`
-  top.value.style.filter = `brightness(${safeValue})`
-  shadow.value.style.opacity = Math.max(0.5, safeValue)
-
-  const maxHeight = 60
-  const minHeight = 40
-  const normalized = Math.max(0, Math.min(1, value))
-  const computedHeight = minHeight + normalized * (maxHeight - minHeight)
-
-  flame.value.style.height = `${computedHeight}px`
-  shadow.value.style.height = `${computedHeight}px`
-
-  const baseTop = -50
-  const topOffset = maxHeight - computedHeight
-  const dynamicTop = baseTop + topOffset
-
-  flame.value.style.top = `${dynamicTop}px`
-  flame.value.style.backgroundColor = `white`
 }
 
 const showFlame = computed(() => candleRef.value && !props.isTimerEnd)
@@ -71,7 +51,7 @@ useFlameAnimation({
     <div class="diya">
       <div class="bowl"></div>
       <div class="thread2"></div>
-      <div class="flame" ref="flame"></div>
+      <div class="flame" ref="flame" v-if="showFlame"></div>
     </div>
   </div>
 </template>
@@ -125,35 +105,31 @@ useFlameAnimation({
 }
 
 .flame {
-  width: 25px;
-  height: 40px;
+  width: 30px;
+  height: 50px;
   position: absolute;
-  top: -50px;
-  left: 46%;
+  top: -60px;
+  left: 45%;
   transform: translateX(-50%) skewX(2deg);
-  border-radius: 50% 50% 45% 45%;
-  background: #ffa73b;
-  /* box-shadow:
-    0 0px 0px 3px white,
-    0 -20px 1px 4px white,
-    0 -25px 2px 3px gold,
-    0 -30px 5px 4px #ff6a00,
-    0 0px 150px 0px #ff6a00,
-    0 -10px 2px 4px white,
-    0 -5px 3px 3px white; */
-
+  border-radius: 50% 50% 40% 40%;
+  background: radial-gradient(
+    ellipse at center,
+    #fffbd5 0%,
+    #ffb347 40%,
+    #ff7f00 60%,
+    transparent 90%
+  );
+  opacity: 1;
   box-shadow:
-    0 0 6px 2px #ffb347,
-    /* soft orange inner glow */ 0 -10px 6px 3px #ff8c00,
-    /* upward warm glow */ 0 -15px 10px 6px #ff6a00,
-    /* stronger orange near top */ 0 -25px 20px 10px #ff4500,
-    /* deep reddish orange outer glow */ 0 0 60px 20px rgba(255, 140, 0, 0.6);
+    0 0 10px 4px rgba(255, 200, 0, 0.6),
+    0 -10px 20px 6px rgba(255, 165, 0, 0.5),
+    0 0 30px 10px rgba(255, 140, 0, 0.3),
+    0 0 60px 20px rgba(255, 214, 0, 0.3);
 
   transition:
     transform 0.5s ease,
     opacity 0.5s ease;
   animation: sway 3s infinite ease-in-out;
-  opacity: 1;
 }
 
 .flame.visible {

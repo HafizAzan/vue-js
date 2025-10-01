@@ -60,7 +60,7 @@ const playMusic = async () => {
       await nextTick()
       audio.muted = false
     } catch (err) {
-      console.warn('Autoplay blocked:', err)
+      throw err
     }
   } else {
     if (!audio.paused) {

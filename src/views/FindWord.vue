@@ -38,7 +38,7 @@ const router = useRouter()
 const route = useRoute()
 
 // states
-const playAgainLevel = Number(route.query.playAgain)
+const playAgainLevel = route.query.playAgain
 const animationActive = ref(true)
 const isAssigningSection = ref(true)
 const shouldRefetchUsers = ref(true)
@@ -201,10 +201,6 @@ const messageText = computed(() => {
 })
 
 // Watchers
-watch(saveValue, (newVal) => {
-  console.log(newVal, 'from animation.vue')
-})
-
 watch(
   [userItems, userSection, isSingleUserLoading],
   ([items, section, loading]) => {
@@ -300,14 +296,9 @@ const updateArrayWithEmptyItems = async () => {
     (single) => single?.section === section && single?.items?.length > 0,
   )
 
-  if (findUseSectionEmpty?._id) {
-    await updateArray({ itemId: findUseSectionEmpty._id, body: { items: [] } })
-  }
-
-  if (Array.isArray(userItems.value) && userItems.value.length > 0 && userSection.value) {
-    await updateUser({ items: [] })
-    await refetchSingleUser()
-  }
+  await updateUser({ items: [] })
+  await refetchSingleUser()
+  await updateArray({ itemId: findUseSectionEmpty._id, body: { items: [] } })
 }
 
 const resetPlayState = () => {
@@ -332,7 +323,7 @@ const leaveHandle = (type) => {
     playAgainLevel
       ? router.push(`${ROUTES.DOOR}?playAgain=${playAgainLevel}`)
       : router.push(ROUTES.DOOR)
-  } else if (type === 'leave') router.push(ROUTES.LEADERBOARD)
+  } else if (type === 'leave' || type === 'finish') router.push(ROUTES.LEADERBOARD)
   else if (type === 'next') {
     router.push(ROUTES.DOOR)
     playStore.incrementLevel()
@@ -414,7 +405,6 @@ const handleSubmit = async (e) => {
   }
 
   const res = await addPlayData(body)
-  console.log(res, 'res handler')
   if (!res?.error) {
     toast.success('Add session SuccessFully!')
     playStore.setCompleteTime(updatedCompleteTime)
@@ -459,7 +449,6 @@ const autoSubmit = async (currentSection = null) => {
   }
 
   const res = await addPlayData(body)
-  console.log(res, 'res auto')
   if (!res?.error) {
     playStore.setCompleteTime(updatedCompleteTime)
     playStore.setCalculateScore(updatedCalculateScore)
@@ -552,6 +541,8 @@ onMounted(() => {
 onBeforeUnmount(() => {
   window.onpopstate = null
 })
+
+const level = playAgainLevel ?? playStore.getLevel()
 </script>
 
 <template>
@@ -601,9 +592,14 @@ onBeforeUnmount(() => {
           </v-form>
         </div>
 
-        <div class="main-animation-container">
+        <div
+          class="main-animation-container"
+          :style="{
+            height: (Number(playAgainLevel) || playStore.getLevel()) === 3 ? '380px' : '',
+          }"
+        >
           <Animation
-            :level="playAgainLevel ?? playStore.getLevel()"
+            :level="level"
             :element="animationFrequency"
             :is-candle-on="animationActive"
             :array-values="controllValues.values"
@@ -613,9 +609,11 @@ onBeforeUnmount(() => {
 
           <p
             :class="
-              (playAgainLevel || playStore.getLevel()) === 2
+              (Number(playAgainLevel) || playStore.getLevel()) === 2
                 ? 'hidden-word-two-level'
-                : 'hidden-word'
+                : (Number(playAgainLevel) || playStore.getLevel()) === 5
+                  ? 'hidden-word-five'
+                  : 'hidden-word'
             "
             :style="getBlur()"
             v-if="!isEnd"
@@ -700,7 +698,7 @@ onBeforeUnmount(() => {
         </div>
         <div class="modal-footer-btn" v-else>
           <Button buttonText="Play The Again Level" @click="leaveHandle('playAgain')" />
-          <Button buttonText="Finish" @click="leaveHandle('leave')" />
+          <Button buttonText="Finish" @click="leaveHandle('finish')" />
         </div>
       </Modal>
 
@@ -809,6 +807,17 @@ onBeforeUnmount(() => {
   position: absolute;
   top: 105px;
   left: 75px;
+  text-transform: capitalize;
+  transition: all ease 200ms;
+}
+
+.hidden-word-five {
+  font-size: 22px;
+  color: white;
+  font-weight: 700;
+  position: absolute;
+  top: 80px;
+  left: 190px;
   text-transform: capitalize;
   transition: all ease 200ms;
 }

@@ -15,12 +15,11 @@ const useFlameAnimation = ({
 
   watchEffect(() => {
     flameOn.value = isCandleOn.value
-    console.log(flame.value, 'flame')
   })
 
   const applyFlameState = (value) => {
+    console.log(value, 'values from hook')
     startFlameAnimation(value)
-    console.log(value, 'val')
     if (!flameOn.value) {
       clearTimeout(updateTimer.value)
       return
@@ -58,7 +57,6 @@ const useFlameAnimation = ({
       async ([newVal, fire]) => {
         await nextTick()
         const flameEl = fire
-        console.log(flameEl, 'flameEl')
         if (!flameEl) return
 
         updateFlameState()

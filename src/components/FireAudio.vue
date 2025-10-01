@@ -19,7 +19,6 @@ const shouldPlay = computed(() => {
 })
 
 const getVolume = () => {
-  console.log('volume')
   const fadeValue = Number(props.isFading).toFixed(2)
   if (!props.candleOn || fadeValue <= 0.2) return 0.01
   else if (fadeValue <= 0.6) return 0.03
@@ -30,17 +29,14 @@ const setupAudio = () => {
   const audio = audioRef.value
   if (!audio) return
 
-  console.log('setupAudio called -> shouldPlay:', shouldPlay.value)
-
   if (shouldPlay.value) {
     audio.src = gateAudio
     audio.loop = true
     audio.volume = getVolume()
 
     audio.play().catch(() => {
-      console.warn('Autoplay blocked. Waiting for user interaction...')
       const handler = () => {
-        audio.play().catch((err) => console.error('Failed to play after click:', err))
+        audio.play()
         document.removeEventListener('click', handler)
       }
       document.addEventListener('click', handler, { once: true })

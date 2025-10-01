@@ -34,9 +34,7 @@ const props = defineProps({
 function handleClick(event) {
   const audio = new Audio(click)
   audio.volume = 0.5
-  audio.play().catch((err) => {
-    console.warn('Click sound could not play:', err)
-  })
+  audio.play().catch((err) => {})
 
   emit('click', event)
 }
