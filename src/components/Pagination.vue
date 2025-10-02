@@ -12,7 +12,7 @@ const props = defineProps({
   },
   totalVisible: {
     type: [Number, String],
-    default: 5,
+    default: 7,
   },
   modelValue: {
     type: Number,
@@ -70,8 +70,10 @@ const prevPage = () => {
 <style scoped>
 .pagination-container {
   display: flex;
+  flex-wrap: wrap;
   justify-content: flex-end;
   margin-top: 1rem;
+  overflow-x: hidden; /* Prevents horizontal scroll */
 }
 
 :deep(.v-pagination .v-btn.v-pagination__more) {
@@ -83,12 +85,20 @@ const prevPage = () => {
 
 :deep(.v-pagination) {
   --v-theme-primary: #ff6b6b;
+  flex-wrap: wrap !important;
+  justify-content: center;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 :deep(.v-pagination .v-btn) {
-  border-radius: 50% !important;
+  border-radius: 10% !important;
   background-color: rgba(248, 13, 13, 0.527);
   color: white;
+  opacity: 0.8;
+  min-width: 36px;
+  height: 36px;
+  font-size: 14px;
 }
 
 :deep(.v-pagination .v-btn--active) {
@@ -96,11 +106,26 @@ const prevPage = () => {
   color: white !important;
 }
 
-:deep(.v-pagination .v-btn .v-icon) {
+:deep(.v-pagination .v-btn .v-icon),
+:deep(.v-pagination .v-btn:hover .v-icon) {
   color: white !important;
 }
 
-:deep(.v-pagination .v-btn:hover .v-icon) {
-  color: white !important;
+/* Better mobile responsiveness */
+@media (max-width: 500px) {
+  .pagination-container {
+    justify-content: center;
+  }
+
+  :deep(.v-pagination .v-btn) {
+    min-width: 30px;
+    height: 30px;
+    font-size: 12px;
+    padding: 0 4px;
+  }
+
+  :deep(.v-pagination__list) {
+    overflow-y: auto;
+  }
 }
 </style>

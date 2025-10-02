@@ -6,6 +6,8 @@ import Diya from './Flame/Diya.vue'
 import Mashaal from './Flame/Mashaal.vue'
 import Bunsen from './Flame/Bunsen.vue'
 import MatchStick from './Flame/MatchStick.vue'
+import BonFire from './Flame/BonFire.vue'
+import Wood from './Flame/Wood.vue'
 
 const props = defineProps({
   level: [String, Number],
@@ -77,7 +79,7 @@ watch(candleValue, (newVal) => {
     v-model:is-candle-on="candleOn"
   />
 
-  <Bunsen
+  <BonFire
     v-if="getLevel === 6"
     :element="props.element"
     :array-values="props.arrayValues"
@@ -86,7 +88,7 @@ watch(candleValue, (newVal) => {
     v-model:is-candle-on="candleOn"
   />
 
-  <Mashaal
+  <Wood
     v-if="getLevel === 7"
     :element="props.element"
     :array-values="props.arrayValues"

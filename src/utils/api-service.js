@@ -47,6 +47,10 @@ const fetchUserById = async (userId) => {
   return response.data
 }
 
+const fetchAllPlayLevels = async () => {
+  const response = await API.get(API_ROUTES.FILTER_PLAY_LEVELS)
+  return response.data
+}
 // post api service
 
 const addPlayUser = async (body = {}) => {
@@ -123,6 +127,7 @@ export {
   fetchSessionWord,
   fetchAllMcqs,
   fetchUserById,
+  fetchAllPlayLevels,
 
   // * Add
   addPlayUser,

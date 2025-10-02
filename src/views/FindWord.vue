@@ -556,7 +556,7 @@ const level = playAgainLevel ?? playStore.getLevel()
         {{ getAllTimeData.overAllTime }}
       </v-typography>
 
-      <v-typography variants="h2" class="text-h2 h2">
+      <v-typography variants="h2" class="text-h4 text-sm-h2 h2">
         {{ getHiddenWord?.question ?? 'Find The Hidden Word?' }}
       </v-typography>
 
@@ -762,7 +762,7 @@ const level = playAgainLevel ?? playStore.getLevel()
 }
 
 .modal-main-text {
-  font-size: 20px !important;
+  font-size: 20px;
 }
 
 .modal-main-title {
@@ -783,6 +783,7 @@ const level = playAgainLevel ?? playStore.getLevel()
   display: flex;
   justify-content: space-between;
   width: 90%;
+  flex-wrap: wrap;
 }
 
 .main-animation-container {
@@ -820,5 +821,36 @@ const level = playAgainLevel ?? playStore.getLevel()
   left: 190px;
   text-transform: capitalize;
   transition: all ease 200ms;
+}
+
+@media (max-width: 765px) {
+  .one-row-with-animation {
+    justify-content: center;
+    align-items: start;
+    width: 100%;
+  }
+
+  .find-word {
+    padding-top: 30px;
+  }
+
+  .hidden-word {
+    left: -60px;
+    top: 160px;
+  }
+
+  .candle {
+    height: 70%;
+  }
+}
+
+@media (max-width: 462px) {
+  .modal-main-text {
+    font-size: 15px !important;
+  }
+
+  .modal-main-title {
+    font-size: 20px !important;
+  }
 }
 </style>

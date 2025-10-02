@@ -38,41 +38,41 @@ const slots = useSlots()
   background-color: transparent;
 }
 
-::v-deep table {
+:deep(table) {
   border-collapse: separate !important;
   border-spacing: 0 20px !important;
   border-radius: 20px !important;
   border: none !important;
 }
 
-::v-deep table > thead > tr {
+:deep(table > thead > tr) {
   color: white;
   font-size: 25px;
 }
 
-::v-deep table > thead > tr > th {
+:deep(table > thead > tr > th) {
   border: none !important;
 }
 
-::v-deep table > tbody > tr {
+:deep(table > tbody > tr) {
   color: white;
   font-size: 25px;
   padding: 0px !important;
 }
 
-::v-deep table > tbody > tr > td {
+:deep(table > tbody > tr > td) {
   background-color: rgba(124, 21, 21, 0.651);
   color: white;
   font-size: 25px;
   padding: 10px 16px;
 }
 
-::v-deep table > tbody > tr > td:first-child {
+:deep(table > tbody > tr > td:first-child) {
   border-top-left-radius: 25px;
   border-bottom-left-radius: 25px;
 }
 
-::v-deep table > tbody > tr > td:last-child {
+:deep(table > tbody > tr > td:last-child) {
   border-top-right-radius: 25px;
   border-bottom-right-radius: 25px;
 }

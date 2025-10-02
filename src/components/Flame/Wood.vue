@@ -1,6 +1,7 @@
 <script setup>
 import useFlameAnimation from '@/hooks/useFlameAnimation'
 import { computed, ref, toRefs, watchEffect } from 'vue'
+import Mashaal from '@/assets/Flame/7.png'
 
 const props = defineProps({
   isCandleOn: Boolean,
@@ -17,7 +18,6 @@ const candleRef = ref(isCandleOn.value)
 const frequency = ref(element.value)
 const assignSectionArray = ref(arrayValues.value)
 const top = ref(null)
-const shadow = ref(null)
 const flame = ref(null)
 
 watchEffect(() => {
@@ -35,17 +35,15 @@ const startFlameAnimation = (value) => {
   const safeValue = Math.max(0.4, Math.min(1.2, value))
   flame.value.style.filter = `brightness(${safeValue})`
   top.value.style.filter = `brightness(${safeValue})`
-  shadow.value.style.opacity = Math.max(0.5, safeValue)
 
-  const maxHeight = 80
+  const maxHeight = 90
   const minHeight = 60
   const normalized = Math.max(0, Math.min(1, value))
   const computedHeight = minHeight + normalized * (maxHeight - minHeight)
 
   flame.value.style.height = `${computedHeight}px`
-  shadow.value.style.height = `${computedHeight}px`
 
-  const baseTop = -110
+  const baseTop = -30
   const topOffset = maxHeight - computedHeight
   const dynamicTop = baseTop + topOffset
 
@@ -65,72 +63,33 @@ useFlameAnimation({
 </script>
 
 <template>
-  <div class="candle-container">
-    <div class="candle">
-      <div class="flame-shadow" ref="shadow" v-if="showFlame"></div>
-      <div class="top" ref="top" v-if="showFlame"></div>
-      <div class="flame" ref="flame" v-if="showFlame"></div>
-      <div class="wick"></div>
-      <div class="flame-bottom"></div>
-    </div>
+  <div class="holder">
+    <div class="flame-shadow" v-if="showFlame"></div>
+    <div class="top" ref="top" v-if="showFlame"></div>
+    <div class="flame" ref="flame" v-if="showFlame"></div>
+    <img :src="Mashaal" alt="img" class="mashaal-img" />
   </div>
 </template>
 
 <style scoped>
-.candle-container {
-  width: 60px;
-  height: 66vh;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  border-radius: 10px;
-  padding: 5px;
-}
-
-.candle {
-  width: 100%;
-  height: 90%;
-  background: linear-gradient(to top, #ffde8d 0%, #ffe9a3 30%, #fff4cc 100%);
-  border-radius: 10px;
-  position: relative;
-  box-shadow:
-    inset 0 -5px 8px rgba(0, 0, 0, 0.3),
-    inset 0 5px 8px rgba(255, 255, 255, 0.4),
-    0 4px 8px rgba(0, 0, 0, 0.3);
-  transition: all ease 5s;
-}
-
-/* Wax drips effect */
-.candle::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
+.holder {
+  margin: 0 auto;
+  width: 15rem;
   height: 100%;
-  background: repeating-linear-gradient(
-    to bottom,
-    rgba(255, 220, 140, 0.6) 0px,
-    rgba(255, 220, 140, 0.6) 8px,
-    transparent 8px,
-    transparent 16px
-  );
-  mask-image: radial-gradient(circle, black 60%, transparent 100%);
-  mask-repeat: no-repeat;
-  mask-size: cover;
-  opacity: 0.3;
-  pointer-events: none;
+  position: relative;
+  display: flex;
+  align-items: end;
 }
 
 .flame {
   position: absolute;
-  top: -110px;
+  top: -30px;
   width: 20px;
-  height: 80px;
+  height: 90px;
   background: white;
   border-radius: 50% 50% 25% 25%;
   transform: translate(50%, 50%);
-  left: 28%;
+  left: 61%;
   box-shadow:
     0 0px 0px 3px white,
     0 -20px 1px 4px white,
@@ -152,13 +111,13 @@ useFlameAnimation({
 
 .top {
   position: absolute;
-  top: -128px;
+  top: -28px;
   width: 20px;
-  height: 80px;
+  height: 60px;
   background: white;
   border-radius: 50% 50% 25% 25%;
   transform: translate(50%, 50%);
-  left: 9%;
+  left: 58%;
   box-shadow:
     0 0px 0px 3px white,
     0 -20px 1px 4px white,
@@ -174,25 +133,12 @@ useFlameAnimation({
   z-index: 1;
 }
 
-/* Wick (black thread inside flame) */
-.wick {
-  position: absolute;
-  top: -25px; /* adjust according to flame size */
-  left: 50%;
-  transform: translateX(-50%);
-  width: 4px;
-  height: 25px;
-  background: linear-gradient(to bottom, #3a3a3a, #000);
-  border-radius: 2px;
-  z-index: 0;
-}
-
 .flame-shadow {
   position: absolute;
-  top: -120px;
+  top: -30px;
   width: 20px;
   height: 80px;
-  left: 9%;
+  left: 60%;
   transform: translate(50%, 50%);
   border-radius: 50% 50% 25% 25%;
   background: transparent;
@@ -206,25 +152,14 @@ useFlameAnimation({
     opacity 0.3s ease-in-out;
 }
 
-.flame-bottom {
-  position: absolute;
-  top: -4px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 92%;
-  height: 20px;
-  background: radial-gradient(circle at 50% 20%, #fff9d6 40%, #ffe39b 100%);
-  border-radius: 50% / 60%;
-  box-shadow:
-    0 2px 4px rgba(0, 0, 0, 0.2),
-    inset 0 -2px 4px rgba(255, 180, 50, 0.4);
-  z-index: 2;
+.mashaal-img {
+  width: 100%;
+  height: 85%;
+  transform: rotate(-20deg);
 }
 
-@media (max-width: 765px) {
-  .candle {
-    height: 60%;
-  }
+.flame.visible {
+  opacity: 1;
 }
 
 @keyframes sway {

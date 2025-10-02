@@ -9,6 +9,7 @@ import Modal from '@/components/Modal.vue'
 
 // api-service
 import {
+  fetchAllPlayLevels,
   fetchLeaderBoardData,
   fetchLeaderBoardDataByLevel,
   fetchSessionWord,
@@ -69,6 +70,11 @@ const { data: getSessionWord } = useQuery({
   queryFn: fetchSessionWord,
 })
 
+const { data: allPlayLevel } = useQuery({
+  queryKey: 'filter-all-play-level',
+  queryFn: fetchAllPlayLevels,
+})
+
 const page = computed({
   get: () => (isLevelFiltered.value ? levelPage.value : currentPage.value),
   set: (val) => {
@@ -98,13 +104,12 @@ const getScore = (item) => {
 }
 
 const FilteredLevels = computed(() => {
-  const levels = new Set(
-    data.value?.data?.flatMap((user) => user?.levelsCompleted || []).filter(Boolean),
-  )
+  const levels = allPlayLevel.value?.levels || []
+
   return [
     { Level: 'All', title: 'Show All Levels' },
-    ...Array.from(levels)
-      .sort((a, b) => a - b)
+    ...[...levels]
+      .sort((a, b) => Number(a) - Number(b))
       .map((level) => ({
         Level: level,
         title: `Level 0${level}`,
@@ -146,9 +151,9 @@ const dropdownLabel = computed(() => {
 const gamePlay = async (action) => {
   if (action === 'leave') {
     resetToken()
+    playStore.resetAll()
     await router.push(ROUTES.LOGIN)
     toast.success('You Logout Successfully!')
-    playStore.resetAll()
   } else if (['play-next', 'play', 'resume'].includes(action)) {
     try {
       await router.push(ROUTES.DOOR)
@@ -169,7 +174,7 @@ const currentLevelData = computed(() => {
 })
 
 watch(
-  [data, totalCount, sessionTime],
+  [data, totalCount, sessionTime, token],
   () => {
     const levelData = currentLevelData.value
     if (!levelData) return
@@ -301,17 +306,28 @@ const ButtonText = () => {
   align-items: start;
   justify-content: space-between;
   color: white;
+  flex-wrap: wrap;
+  gap: 20px;
 }
 
 .content-btns {
   display: flex;
   flex-direction: row;
+  flex-wrap: wrap;
   gap: 1rem;
-  margin-top: 2rem;
 }
 
 .main-content-table {
   padding-top: 20px;
   padding-bottom: 10px;
+}
+
+/* Media Query */
+@media (max-width: 400px) {
+  .content,
+  .content-btns {
+    align-items: center;
+    justify-content: center;
+  }
 }
 </style>

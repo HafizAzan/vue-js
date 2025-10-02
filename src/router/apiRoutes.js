@@ -15,4 +15,5 @@ export const API_ROUTES = {
   POST_MCQ_QUESTIONS: `/api/mcq/add-words`,
   GET_SINGLE_USER: `/api/user/get-user/:userId`,
   POST_ADD_PLAY_DATA: `/api/play`,
+  FILTER_PLAY_LEVELS: `/api/play/levels`,
 }
