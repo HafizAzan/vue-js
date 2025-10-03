@@ -6,6 +6,9 @@ import AuthFormView from '@/views/AuthFormView.vue'
 import AuthAnswer from '@/views/AuthAnswer.vue'
 import Door from '@/views/Door.vue'
 import FindWord from '@/views/FindWord.vue'
+import AdminDashboard from '@/views/AdminViews/AdminDashboard.vue'
+import SingleUser from '@/views/AdminViews/SingleUser.vue'
+import AdminProfile from '@/views/AdminViews/AdminProfile.vue'
 
 export const ROUTES = {
   HOME: '/',
@@ -15,11 +18,14 @@ export const ROUTES = {
   LEADERBOARD: '/leaderboard',
   DOOR: '/play/door',
   FIND_WORD: '/play/find-the-hidden-word',
+  USER_LIST: '/admin/user-list',
+  SINGLE_USER: '/admin/user-detail/:userId/:username',
+  ADMIN_PROFILE: '/admin/account',
 }
 
 const routes = [
   {
-    path: '/',
+    path: ROUTES.HOME,
     component: () => import('@/layout/Layout.vue'),
     children: [
       {
@@ -46,16 +52,37 @@ const routes = [
         path: ROUTES.LEADERBOARD,
         name: 'leaderboard',
         component: Leaderboard,
+        meta: { requiresAuth: false, roles: ['user'] },
       },
       {
         path: ROUTES.DOOR,
         name: 'door',
         component: Door,
+        meta: { requiresAuth: false, roles: ['user'] },
       },
       {
         path: ROUTES.FIND_WORD,
         name: 'findWord',
         component: FindWord,
+        meta: { requiresAuth: false, roles: ['user'] },
+      },
+      {
+        path: ROUTES.USER_LIST,
+        name: 'userList',
+        component: AdminDashboard,
+        meta: { requiresAuth: true, roles: ['admin'] },
+      },
+      {
+        path: ROUTES.SINGLE_USER,
+        name: 'singleUser',
+        component: SingleUser,
+        meta: { requiresAuth: true, roles: ['admin'] },
+      },
+      {
+        path: ROUTES.ADMIN_PROFILE,
+        name: 'adminProfile',
+        component: AdminProfile,
+        meta: { requiresAuth: true, roles: ['admin'] },
       },
     ],
   },
@@ -69,6 +96,19 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
   const { token, IsFirstTime, pageName } = useUserStore()
 
+  const isLoggedIn = !!token
+  const userRole = token?.loginAs || null
+  const allowedRoles = to.meta?.roles || []
+
+  if (allowedRoles.length && userRole && !allowedRoles.includes(userRole)) {
+    const redirectPath = userRole === 'admin' ? ROUTES.USER_LIST : ROUTES.LEADERBOARD
+    if (to.path !== redirectPath) {
+      return next(redirectPath)
+    } else {
+      return next(false)
+    }
+  }
+
   if (!IsFirstTime) {
     if (to.path !== ROUTES.HOME) {
       return next(ROUTES.HOME)
@@ -76,22 +116,26 @@ router.beforeEach((to, from, next) => {
     return next()
   }
 
-  if (IsFirstTime && !token) {
+  if (IsFirstTime && !isLoggedIn) {
     if (![ROUTES.LOGIN, ROUTES.REGISTER].includes(to.path)) {
       return next(ROUTES.LOGIN)
     }
     return next()
   }
 
-  if (IsFirstTime && token) {
-    const redirectPath = pageName === 'register' ? ROUTES.ANSWERS : ROUTES.LEADERBOARD
-
-    const allowedRoutes = [redirectPath, ROUTES.DOOR, ROUTES.FIND_WORD]
-
-    if (!allowedRoutes.includes(to.path)) {
-      return next(redirectPath)
+  if (IsFirstTime && isLoggedIn) {
+    if (userRole === 'admin') {
+      const allowedRoutes = ['singleUser', 'userList', 'adminProfile']
+      if (!allowedRoutes.includes(to.name)) {
+        return next(ROUTES.USER_LIST)
+      }
+    } else {
+      const redirectPath = pageName === 'register' ? ROUTES.ANSWERS : ROUTES.LEADERBOARD
+      const allowedRoutes = [redirectPath, ROUTES.DOOR, ROUTES.FIND_WORD]
+      if (!allowedRoutes.includes(to.path)) {
+        return next(redirectPath)
+      }
     }
-    return next()
   }
 
   next()

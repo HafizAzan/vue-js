@@ -777,6 +777,7 @@ const level = playAgainLevel ?? playStore.getLevel()
   gap: 20px;
   align-items: center;
   margin-top: 10px;
+  flex-wrap: wrap;
 }
 
 .one-row-with-animation {

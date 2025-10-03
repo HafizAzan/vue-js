@@ -118,7 +118,7 @@ const FilteredLevels = computed(() => {
 })
 
 const playAgainLevels = computed(() => {
-  return Array.from({ length: playStore.getLevel() - 1 }).map((_, index) => ({
+  return Array.from({ length: playStore.getLevel() }).map((_, index) => ({
     level: `Level ${index + 1}`,
     title: `Level 0${index + 1}`,
   }))
@@ -294,7 +294,7 @@ const ButtonText = () => {
         </template>
       </Table>
 
-      <Pagination v-model="page" :length="totalPages" :total-visible="5" rounded="circle" />
+      <Pagination v-model="page" :length="totalPages" :total-visible="3" rounded="circle" />
     </div>
   </main>
 </template>

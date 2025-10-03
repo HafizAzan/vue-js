@@ -36,6 +36,7 @@ const slots = useSlots()
 .v-card,
 .custom-table {
   background-color: transparent;
+  position: static;
 }
 
 :deep(table) {

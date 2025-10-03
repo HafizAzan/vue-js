@@ -117,6 +117,7 @@ onUnmounted(() => {
   overflow-y: auto;
   position: relative;
   z-index: 2;
+  min-height: 100vh;
 }
 
 .animation-brightness {

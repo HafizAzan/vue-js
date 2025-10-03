@@ -132,4 +132,8 @@ const handleDisagree = () => {
   background-color: transparent !important;
   border: 1px solid white;
 }
+
+:deep(.v-card-text) {
+  width: 100%;
+}
 </style>

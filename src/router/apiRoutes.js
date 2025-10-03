@@ -16,4 +16,13 @@ export const API_ROUTES = {
   GET_SINGLE_USER: `/api/user/get-user/:userId`,
   POST_ADD_PLAY_DATA: `/api/play`,
   FILTER_PLAY_LEVELS: `/api/play/levels`,
+
+  ADMIN: {
+    PROFILE: `/api/admin/admin-data`,
+    GET_USERS_LIST: `/api/user/get-users`,
+    GET_SINGLE_USER: `/api/user/get-user/:userId`,
+    USER_REPORT: `/api/user/download-user-play-pdf`,
+    UPDATE_USER: `/api/user/:userId/update-user`,
+    DELETE_USER: `/api/user/:userId/delete-user`,
+  },
 }

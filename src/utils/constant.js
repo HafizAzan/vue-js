@@ -13,6 +13,18 @@ export const headers = [
   { key: 'totalScore', align: 'end', sortable: false, title: 'Score' },
 ]
 
+export const userListHeaders = [
+  {
+    align: 'start',
+    key: '_id',
+    sortable: false,
+    title: 'User Id',
+  },
+  { key: 'userName', sortable: false, title: 'Username' },
+  { key: 'createdAt', align: 'start', sortable: false, title: 'Joining Date' },
+  { key: 'actions', align: 'end', sortable: false, title: 'Action' },
+]
+
 export const formatTime = (totalSeconds) => {
   const minutes = Math.floor(totalSeconds / 60)
   const seconds = totalSeconds % 60
@@ -136,4 +148,22 @@ export const calculateFlame = (
   return {
     points: result,
   }
+}
+
+export function formatDateTimeUTC(isoString) {
+  if (!isoString) return ''
+
+  const date = new Date(isoString)
+
+  const day = date.getUTCDate()
+  const month = date.toLocaleString('en-US', { month: 'short', timeZone: 'UTC' })
+  const year = date.getUTCFullYear()
+
+  let hours = date.getUTCHours()
+  const minutes = date.getUTCMinutes().toString().padStart(2, '0')
+  const ampm = hours >= 12 ? 'PM' : 'AM'
+
+  hours = hours % 12 || 12
+
+  return `${day}-${month}-${year}: ${hours}:${minutes}${ampm}`
 }

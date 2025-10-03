@@ -118,7 +118,7 @@ const handleSubmit = async () => {
     if (!res?.error) {
       toast.success('Logged in user sucessfully!')
       setToken(res?.token)
-      router.push(ROUTES.LEADERBOARD)
+      router.push(res?.token?.loginAs === 'admin' ? ROUTES.USER_LIST : ROUTES.LEADERBOARD)
     } else {
       toast.error(res?.error || res?.error?.message || 'Failed To Submit')
     }
