@@ -1,14 +1,29 @@
 <script setup>
+import BreadCrumb from '@/components/BreadCrumb.vue'
 import Button from '@/components/Button.vue'
+import Input from '@/components/Input.vue'
 import Loader from '@/components/Loader.vue'
+import Modal from '@/components/Modal.vue'
 import Navigator from '@/components/Navigator.vue'
-import { fetchAdminProfile } from '@/utils/admin-api-service'
-import { useQuery } from '@tanstack/vue-query'
-import { computed } from 'vue'
+import { ROUTES } from '@/router'
+import { useUserStore } from '@/store/useUserStore'
+import { fetchAdminProfile, updateAdminProfile } from '@/utils/admin-api-service'
+import { useMutation, useQuery } from '@tanstack/vue-query'
+import { computed, reactive, ref, watch } from 'vue'
+import { toast } from 'vue-sonner'
 
-const { data: getAdminData, isLoading: isAdminLoading } = useQuery({
+const {
+  data: getAdminData,
+  isLoading: isAdminLoading,
+  refetch: refetchAdminProfile,
+} = useQuery({
   queryKey: ['admin-profile'],
   queryFn: () => fetchAdminProfile(),
+})
+
+const { mutateAsync: editAdminProfile, isPending: isUpdatingAdminProfile } = useMutation({
+  mutationKey: ['update-admin-profile'],
+  mutationFn: ({ adminId, body }) => updateAdminProfile({ adminId, body }),
 })
 
 const adminData = computed(() => {
@@ -16,11 +31,100 @@ const adminData = computed(() => {
   return {
     userName: data?.admin?.userName ?? '-',
     email: data?.admin?.email ?? '-',
+    password: data?.admin?.password ?? '-',
     id: data?.admin?.id ?? '-',
   }
 })
 
-console.log(getAdminData.value, 'GTDV')
+const userStore = useUserStore()
+const openInfoModal = ref(null)
+const form = reactive({
+  userName: '',
+  email: '',
+  password: '',
+  c_password: '',
+  r_password: '',
+})
+
+const editModal = (type) => {
+  if (type === 'all') {
+    form.userName = adminData.value.userName || ''
+    form.email = adminData.value.email || ''
+    openInfoModal.value = 'all'
+  } else if (type === 'password') {
+    form.password = ''
+    form.c_password = ''
+    form.r_password = ''
+    openInfoModal.value = 'password'
+  }
+}
+
+const handleSubmit = async () => {
+  const { userName, email } = form
+  const response = await editAdminProfile({
+    adminId: userStore?.token?._id || userStore?.token?.adminId,
+    body: { userName, email },
+  })
+
+  if (!response?.error) {
+    toast.success('Admin Info SuccessFully!')
+    userStore.setToken({ ...response?.token, loginAs: 'admin' })
+    openInfoModal.value = null
+    await refetchAdminProfile()
+  } else {
+    toast.error('Something Went Wrong!')
+  }
+}
+
+const handlePasswordSubmit = async () => {
+  const { password, c_password, r_password } = form
+
+  if (!password || !c_password || !r_password) {
+    toast.error('Please fill all password fields')
+    return
+  }
+
+  if (password !== adminData?.value?.password) {
+    toast.error('Current Password Not Match')
+    return
+  }
+
+  if (c_password !== r_password) {
+    toast.error('Passwords do not match')
+    return
+  }
+
+  const response = await editAdminProfile({
+    adminId: userStore?.token?._id || userStore?.token?.adminId,
+    body: { password: c_password },
+  })
+
+  if (!response?.error) {
+    toast.success('Password Successfully Updated!')
+    userStore.setToken({ ...response?.token, loginAs: 'admin' })
+    openInfoModal.value = null
+    await refetchAdminProfile()
+  } else {
+    toast.error('Something Went Wrong!')
+  }
+
+  form.c_password = ''
+  form.r_password = ''
+  form.password = ''
+}
+
+const breadcrumbItems = [
+  {
+    title: 'User List',
+    disabled: false,
+    to: ROUTES.USER_LIST,
+  },
+  {
+    title: 'Admin Profile',
+    disabled: true,
+    to: ROUTES.ADMIN_ADD_JUMBLE_WORD,
+  },
+]
 </script>
 
 <template>
@@ -30,13 +134,15 @@ console.log(getAdminData.value, 'GTDV')
       <Navigator />
     </div>
 
+    <BreadCrumb :items="breadcrumbItems" />
+
     <Loader v-if="isAdminLoading" />
 
     <main v-else class="main-card-wrapper">
       <div class="card">
         <div class="card-header">
           <h4>Admin Overview</h4>
-          <v-icon>mdi-pencil</v-icon>
+          <v-icon @click="editModal('all')">mdi-pencil</v-icon>
         </div>
 
         <div class="card-info">
@@ -61,8 +167,60 @@ console.log(getAdminData.value, 'GTDV')
         </div>
 
         <div class="card-btn">
-          <Button button-text="Update Password" />
+          <Button button-text="Update Password" @click="editModal('password')" />
         </div>
+
+        <Modal v-model="openInfoModal" v-if="openInfoModal === 'all'" max-width="450">
+          <template #title>
+            <p class="form-title">Edit Admin Info</p>
+          </template>
+
+          <v-form fast-fail @submit.prevent="handleSubmit" class="auth-form">
+            <div class="main-input">
+              <Input v-model="form.userName" label="Username" type="text" />
+            </div>
+
+            <div class="main-input">
+              <Input v-model="form.email" label="Email" type="email" />
+            </div>
+
+            <Button
+              type="submit"
+              buttonText="Submit"
+              appendIcon="mdi-arrow-right"
+              :is-loading="isUpdatingAdminProfile"
+              :disabled="isUpdatingAdminProfile"
+            />
+          </v-form>
+        </Modal>
+
+        <Modal v-model="openInfoModal" v-if="openInfoModal === 'password'" max-width="450">
+          <template #title>
+            <p class="form-title">Edit Admin Password</p>
+          </template>
+
+          <v-form fast-fail @submit.prevent="handlePasswordSubmit" class="auth-form">
+            <div class="main-input">
+              <Input v-model="form.password" label="Current Password" type="password" />
+            </div>
+
+            <div class="main-input">
+              <Input v-model="form.c_password" label="Confirm Password" type="password" />
+            </div>
+
+            <div class="main-input">
+              <Input v-model="form.r_password" label="Repeat Password" type="password" />
+            </div>
+
+            <Button
+              type="submit"
+              buttonText="Submit"
+              appendIcon="mdi-arrow-right"
+              :is-loading="isUpdatingAdminProfile"
+              :disabled="isUpdatingAdminProfile"
+            />
+          </v-form>
+        </Modal>
       </div>
     </main>
   </main>
@@ -105,6 +263,8 @@ console.log(getAdminData.value, 'GTDV')
 .card-header h4 {
   font-size: 28px;
   color: white;
+  font-weight: 700;
+  letter-spacing: 0.8px;
 }
 
 .card-header i {
@@ -131,5 +291,27 @@ console.log(getAdminData.value, 'GTDV')
   width: 45%;
   margin: 0 auto;
   margin-top: 25px;
+}
+
+.auth-form {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 65%;
+  padding: 10px;
+  display: flex;
+  flex-flow: column wrap;
+  gap: 20px;
+}
+
+.form-title {
+  font-size: 2.4rem;
+}
+
+.main-input {
+  height: 30px;
+  width: 100%;
+  margin-bottom: 25px;
 }
 </style>

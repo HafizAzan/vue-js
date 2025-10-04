@@ -23,6 +23,21 @@ const navigationItem = [
     title: 'Admin Profile',
     route: ROUTES.ADMIN_PROFILE,
   },
+  {
+    icon: 'mdi-forum',
+    title: 'Admin Add Question',
+    route: ROUTES.ADMIN_ADD_QUESTION,
+  },
+  {
+    icon: 'mdi-file-word-box-outline',
+    title: 'Admin Add Jumble Words',
+    route: ROUTES.ADMIN_ADD_JUMBLE_WORD,
+  },
+  {
+    icon: 'mdi-image-multiple ',
+    title: 'Admin Background Images',
+    route: ROUTES.ADMIN_ADD_BACKGROUND_IMG,
+  },
 ]
 
 const navigateTo = (path) => {
@@ -37,7 +52,7 @@ const navigateTo = (path) => {
       <v-icon>mdi-menu</v-icon>
     </div>
 
-    <v-navigation-drawer v-model="drawer" class="navigator" theme="dark" temporary>
+    <v-navigation-drawer v-model="drawer" class="navigator" theme="dark" temporary width="300">
       <div class="logo">
         <img :src="logo" alt="Logo" />
       </div>

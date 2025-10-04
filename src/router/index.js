@@ -9,6 +9,9 @@ import FindWord from '@/views/FindWord.vue'
 import AdminDashboard from '@/views/AdminViews/AdminDashboard.vue'
 import SingleUser from '@/views/AdminViews/SingleUser.vue'
 import AdminProfile from '@/views/AdminViews/AdminProfile.vue'
+import AdminAddQuestion from '@/views/AdminViews/AdminAddQuestion.vue'
+import AdminJumbleWord from '@/views/AdminViews/AdminJumbleWord.vue'
+import AdminBackgroundImages from '@/views/AdminViews/AdminBackgroundImages.vue'
 
 export const ROUTES = {
   HOME: '/',
@@ -21,6 +24,9 @@ export const ROUTES = {
   USER_LIST: '/admin/user-list',
   SINGLE_USER: '/admin/user-detail/:userId/:username',
   ADMIN_PROFILE: '/admin/account',
+  ADMIN_ADD_QUESTION: '/admin/add-question',
+  ADMIN_ADD_JUMBLE_WORD: '/admin/add-jumble-words',
+  ADMIN_ADD_BACKGROUND_IMG: '/admin/add-background-images',
 }
 
 const routes = [
@@ -84,6 +90,24 @@ const routes = [
         component: AdminProfile,
         meta: { requiresAuth: true, roles: ['admin'] },
       },
+      {
+        path: ROUTES.ADMIN_ADD_QUESTION,
+        name: 'adminAddQuestion',
+        component: AdminAddQuestion,
+        meta: { requiresAuth: true, roles: ['admin'] },
+      },
+      {
+        path: ROUTES.ADMIN_ADD_JUMBLE_WORD,
+        name: 'adminAddJumbleWord',
+        component: AdminJumbleWord,
+        meta: { requiresAuth: true, roles: ['admin'] },
+      },
+      {
+        path: ROUTES.ADMIN_ADD_BACKGROUND_IMG,
+        name: 'adminAddBgImg',
+        component: AdminBackgroundImages,
+        meta: { requiresAuth: true, roles: ['admin'] },
+      },
     ],
   },
 ]
@@ -125,7 +149,14 @@ router.beforeEach((to, from, next) => {
 
   if (IsFirstTime && isLoggedIn) {
     if (userRole === 'admin') {
-      const allowedRoutes = ['singleUser', 'userList', 'adminProfile']
+      const allowedRoutes = [
+        'singleUser',
+        'userList',
+        'adminProfile',
+        'adminAddQuestion',
+        'adminAddJumbleWord',
+        'adminAddBgImg',
+      ]
       if (!allowedRoutes.includes(to.name)) {
         return next(ROUTES.USER_LIST)
       }
