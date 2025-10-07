@@ -167,3 +167,19 @@ export function formatDateTimeUTC(isoString) {
 
   return `${day}-${month}-${year}: ${hours}:${minutes}${ampm}`
 }
+
+export const modalConfig = [
+  { key: 'sessionText', heading: 'Epoch Modal' },
+  { key: 'timeUpText', heading: "Time's Up Modal" },
+  { key: 'allSessionFinishModalText', heading: 'All Epoch Complete Modal' },
+  { key: 'gateCompleteModalText', heading: 'Gate Complete Modal' },
+  { key: 'wrongCompleteModalText', heading: 'Wrong Answer Modal' },
+  { key: 'lastLevelModalText', heading: 'Last Level Modal' },
+  { key: 'heading', heading: 'Play Again Modal' },
+]
+
+export const audioFile = [
+  { key: 'low', heading: 'Low Audio' },
+  { key: 'medium', heading: 'Medium Audio' },
+  { key: 'high', heading: 'High Audio' },
+]

@@ -6,13 +6,24 @@ import Modal from '@/components/Modal.vue'
 import Navigator from '@/components/Navigator.vue'
 import Pagination from '@/components/Pagination.vue'
 import Table from '@/components/Table.vue'
+import Tooltip from '@/components/Tooltip.vue'
+import UploadCSV from '@/components/UploadCSV.vue'
 import { ROUTES } from '@/router'
 import { API_ROUTES } from '@/router/apiRoutes'
-import { deleteUserById, fetchAllUser, fetchUserId, updateUser } from '@/utils/admin-api-service'
+import {
+  adminAddTime,
+  adminUpdateTime,
+  deleteUserById,
+  fetchAllTime,
+  fetchAllUser,
+  fetchUserId,
+  updateUser,
+} from '@/utils/admin-api-service'
+import { fetchAllValues } from '@/utils/api-service'
 import { baseUrl } from '@/utils/config'
 import { formatDateTimeUTC, userListHeaders } from '@/utils/constant'
 import { useMutation, useQuery } from '@tanstack/vue-query'
-import { computed, nextTick, reactive, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
 
@@ -25,6 +36,40 @@ const form = reactive({
   username: '',
   email: '',
   password: '',
+  overAllTime: '',
+  animationStartTime: '',
+  animationStopTime: '',
+  animationFrequency: '',
+  time_id: '',
+})
+
+const {
+  data: getAllTime,
+  isLoading: isGetAllTimeLoader,
+  isFetching: isFetchingTime,
+  refetch: refetchAllTime,
+} = useQuery({
+  queryKey: computed(() => ['all-users']),
+  queryFn: () => fetchAllTime(),
+})
+
+const {
+  data: allValues,
+  isLoading: isValueLoading,
+  refetch: refetcAllValues,
+} = useQuery({
+  queryKey: ['get-values'],
+  queryFn: fetchAllValues,
+})
+
+const { mutateAsync: addTime, isPending: isAddingTime } = useMutation({
+  mutationKey: ['add-time'],
+  mutationFn: (body) => adminAddTime(body),
+})
+
+const { mutateAsync: updateTime, isPending: isUpdatingTime } = useMutation({
+  mutationKey: ['update-time'],
+  mutationFn: (body) => adminUpdateTime(body),
 })
 
 const {
@@ -58,6 +103,8 @@ const { mutateAsync: deleteUser, isPending: isDeletingUser } = useMutation({
   mutationFn: (userId) => deleteUserById(userId),
 })
 
+const openDialog = ref(null)
+const isEditingTime = ref(false)
 const totalPages = computed(() => getAllUsers?.value?.totalPages || 1)
 const users = computed(() => getAllUsers?.value?.users || [])
 const page = computed({
@@ -67,12 +114,58 @@ const page = computed({
 
 watch(getSingleUser, (val) => {
   if (val) {
-    console.log(val.user)
     form.username = val.user.userName || ''
     form.email = val.user.email || ''
     form.password = val.user.password || ''
   }
 })
+
+watch(getAllTime, (val) => {
+  if (val) {
+    form.overAllTime = val?.time?.overAllTime || ''
+    form.animationStartTime = val?.time?.animationTime || ''
+    form.animationStopTime = val?.time?.animationStopTime || ''
+    form.animationFrequency = val?.time?.animationFrequency || ''
+    form.time_id = val?.time?._id || ''
+  }
+})
+
+onMounted(() => {
+  if (getAllTime?.value?.time) {
+    form.overAllTime = getAllTime?.value?.time?.overAllTime || ''
+    form.animationStartTime = getAllTime?.value?.time?.animationTime || ''
+    form.animationStopTime = getAllTime?.value?.time?.animationStopTime || ''
+    form.animationFrequency = getAllTime?.value?.time?.animationFrequency || ''
+    form.time_id = getAllTime?.value?.time?._id || ''
+  }
+})
+
+const DownloadCSVFile = async () => {
+  try {
+    reportLoading.value = true
+    const response = await fetch(`${baseUrl}${API_ROUTES.ADMIN.DOWNLOAD_CSV}`, {
+      method: 'GET',
+    })
+
+    if (!response.ok) {
+      toast.error('Failed to fetch CSV file')
+    }
+
+    const blob = await response.blob()
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = 'all-user-csv-file.csv'
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    window.URL.revokeObjectURL(url)
+  } catch (error) {
+    toast.error('Failed to download CSV file')
+  } finally {
+    reportLoading.value = false
+  }
+}
 
 const downloadPDF = async (userId) => {
   try {
@@ -112,7 +205,9 @@ const navigateUserDetail = (single) => {
     },
   })
 }
+
 const openModal = (userId) => (open.value = userId)
+
 const editModal = async (userId) => {
   await nextTick()
   editId.value = userId
@@ -161,18 +256,96 @@ const handleSubmit = async () => {
     toast.error(error)
   }
 }
+
+const openTimerModal = (type) => {
+  if (type === 'timer') {
+    openDialog.value = 'timer'
+  }
+}
+
+const isDisabled = computed(() => {
+  const hasTime = !!getAllTime.value?.time
+  if (!hasTime) return false
+  return !isEditingTime.value
+})
+
+watch(getAllTime, (val) => {
+  isEditingTime.value = !val?.time
+})
+
+const editTimeForm = () => {
+  isEditingTime.value = !isEditingTime.value
+}
+
+const timerHandler = async () => {
+  const { overAllTime, animationStartTime, animationStopTime, animationFrequency } = form
+  const body = {
+    overAllTime: overAllTime,
+    animationTime: animationStartTime,
+    animationStopTime: animationStopTime,
+    animationFrequency: animationFrequency,
+  }
+
+  try {
+    if (getAllTime.value?.time) {
+      const response = await updateTime(body)
+      if (response?.error) {
+        toast.error(response?.error?.message || 'Failed To Update Please Try Again Later')
+      } else {
+        await refetchAllTime()
+        toast.success(
+          response?.message || response?.data?.message || 'Time Form Updated SuccessFully!',
+        )
+      }
+    } else {
+      const res = await addTime(body)
+      if (res?.error) {
+        toast.error(res?.error?.message || 'Failed To Save Please Try Again Later')
+      } else {
+        await refetchAllTime()
+        toast.success(res?.message || res?.data?.message || 'Time Form Saved SuccessFully!')
+      }
+    }
+  } catch (error) {
+    toast.error(`Error :`, error)
+  }
+  isEditingTime.value = false
+  openDialog.value = null
+}
 </script>
 
 <template>
   <main class="container">
     <div class="content">
       <v-typography variants="h3" class="text-h3 h3">User List</v-typography>
-      <Navigator />
+
+      <div class="nav-icon">
+        <UploadCSV :refetch="refetcAllValues" />
+
+        <Tooltip text="Download CSV file">
+          <v-icon @click="DownloadCSVFile"> mdi-tray-arrow-down</v-icon>
+        </Tooltip>
+
+        <Tooltip text="Set Time">
+          <v-icon @click="openTimerModal('timer')">mdi-clock-time-four-outline</v-icon>
+        </Tooltip>
+
+        <Tooltip text="Menu">
+          <Navigator />
+        </Tooltip>
+      </div>
     </div>
 
     <Loader
       v-if="
-        isGetAllUserLoader || isFetchingUser || reportLoading || isDeletingUser || isGetSingleUser
+        isGetAllUserLoader ||
+        isFetchingUser ||
+        reportLoading ||
+        isDeletingUser ||
+        isGetSingleUser ||
+        isGetAllTimeLoader ||
+        isFetchingTime ||
+        isValueLoading
       "
       color="white"
     />
@@ -197,6 +370,73 @@ const handleSubmit = async () => {
       </Table>
 
       <Pagination v-model="page" :length="totalPages" :total-visible="3" rounded="circle" />
+
+      <Modal
+        v-model="openDialog"
+        v-if="openDialog === 'timer'"
+        max-width="450"
+        @disagree="
+          () => {
+            openDialog = null
+            isEditingTime = false
+          }
+        "
+      >
+        <template #title>
+          <div class="sub-header">
+            <p class="form-title">{{ isEditingTime ? 'Update' : 'Set' }} Time</p>
+            <Tooltip text="Edit">
+              <v-icon @click="editTimeForm">mdi-pencil</v-icon>
+            </Tooltip>
+          </div>
+        </template>
+
+        <v-form fast-fail @submit.prevent="timerHandler" class="auth-form">
+          <div class="main-input">
+            <Input
+              v-model="form.overAllTime"
+              label="Enter Over All Time (10 seconds)"
+              type="number"
+              :readonly="isDisabled"
+            />
+          </div>
+
+          <div class="main-input">
+            <Input
+              v-model="form.animationStartTime"
+              label="Enter Animation Start Time (4 seconds)"
+              type="number"
+              :readonly="isDisabled"
+            />
+          </div>
+
+          <div class="main-input">
+            <Input
+              v-model="form.animationStopTime"
+              label="Enter Animation Stop Time (8 seconds)"
+              type="number"
+              :readonly="isDisabled"
+            />
+          </div>
+
+          <div class="main-input">
+            <Input
+              v-model="form.animationFrequency"
+              label="Enter Animation Frequency"
+              type="number"
+              :readonly="isDisabled"
+            />
+          </div>
+
+          <Button
+            type="submit"
+            :buttonText="isEditingTime ? 'Update Time' : 'Save Time'"
+            appendIcon="mdi-arrow-right"
+            :is-loading="isUpdatingUser || isAddingTime || isUpdatingTime"
+            :disabled="isDisabled"
+          />
+        </v-form>
+      </Modal>
 
       <Modal
         v-model="open"
@@ -306,6 +546,31 @@ const handleSubmit = async () => {
   display: flex;
   flex-flow: column wrap;
   gap: 20px;
+}
+
+.nav-icon {
+  display: inline-flex;
+  gap: 20px;
+  align-items: center;
+}
+
+.nav-icon .v-icon {
+  font-size: 3.4rem;
+  cursor: pointer;
+  padding: 10px;
+}
+
+.sub-header {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0px 40px;
+}
+
+.sub-header .v-icon {
+  font-size: 2rem;
+  cursor: pointer;
 }
 
 /* Media Query */

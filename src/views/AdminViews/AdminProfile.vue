@@ -112,19 +112,6 @@ const handlePasswordSubmit = async () => {
   form.r_password = ''
   form.password = ''
 }
-
-const breadcrumbItems = [
-  {
-    title: 'User List',
-    disabled: false,
-    to: ROUTES.USER_LIST,
-  },
-  {
-    title: 'Admin Profile',
-    disabled: true,
-    to: ROUTES.ADMIN_ADD_JUMBLE_WORD,
-  },
-]
 </script>
 
 <template>
@@ -134,7 +121,7 @@ const breadcrumbItems = [
       <Navigator />
     </div>
 
-    <BreadCrumb :items="breadcrumbItems" />
+    <BreadCrumb />
 
     <Loader v-if="isAdminLoading" />
 

@@ -99,19 +99,6 @@ const cancle = () => {
   form.id = null
   form.question = null
 }
-
-const breadcrumbItems = [
-  {
-    title: 'User List',
-    disabled: false,
-    to: ROUTES.USER_LIST,
-  },
-  {
-    title: 'Admin Add Question',
-    disabled: true,
-    to: ROUTES.ADMIN_ADD_JUMBLE_WORD,
-  },
-]
 </script>
 
 <template>
@@ -123,7 +110,7 @@ const breadcrumbItems = [
       <Navigator />
     </div>
 
-    <BreadCrumb :items="breadcrumbItems" />
+    <BreadCrumb />
 
     <main class="main-form-wrapper">
       <h2>Enter Question</h2>

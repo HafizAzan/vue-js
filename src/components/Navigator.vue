@@ -34,9 +34,14 @@ const navigationItem = [
     route: ROUTES.ADMIN_ADD_JUMBLE_WORD,
   },
   {
-    icon: 'mdi-image-multiple ',
+    icon: 'mdi-image-multiple',
     title: 'Admin Background Images',
     route: ROUTES.ADMIN_ADD_BACKGROUND_IMG,
+  },
+  {
+    icon: 'mdi-script-text-play',
+    title: 'Admin Text And Audio',
+    route: ROUTES.ADMIN_ADD_MODAL_AND_AUDIO,
   },
 ]
 

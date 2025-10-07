@@ -31,6 +31,16 @@ const fetchAllBgImg = async () => {
   return response.data
 }
 
+const fetchAllTime = async () => {
+  const response = await API.get(API_ROUTES.ADMIN.GET_ALL_TIME)
+  return response.data
+}
+
+const fetchAllModalConfig = async () => {
+  const response = await API.get(API_ROUTES.ADMIN.GET_MODAL)
+  return response.data
+}
+
 const adminAddQuestion = async (body) => {
   const response = await API.post(`${API_ROUTES.ADMIN.ADD_QUESTION}`, body)
   return response.data
@@ -46,11 +56,43 @@ const adminAddBackgroundImages = async (body) => {
   return response.data
 }
 
+const adminAddTime = async (body) => {
+  const response = await API.post(`${API_ROUTES.ADMIN.POST_ALL_TIME}`, body)
+  return response.data
+}
+
+const adminAddValues = async (body, config = {}) => {
+  const response = await API.post(`${API_ROUTES.ADMIN.POST_VALUE}`, body, {
+    ...config,
+    headers: {
+      'Content-Type': 'multipart/form-data',
+      ...(config.headers || {}),
+    },
+  })
+
+  return response.data
+}
+
+const adminUpdateTime = async (body) => {
+  const response = await API.patch(`${API_ROUTES.ADMIN.PATCH_ALL_TIME}`, body)
+  return response.data
+}
+
+const adminUpdateValue = async ({ id, body }) => {
+  const response = await API.patch(`${API_ROUTES.ADMIN.PATCH_VALUE?.replace(':itemId', id)}`, body)
+  return response.data
+}
+
 const adminUpdateJumbleWord = async ({ id, body }) => {
   const response = await API.patch(
     `${API_ROUTES.ADMIN.UPDATE_JUMBLE_WORDS?.replace(':id', id)}`,
     body,
   )
+  return response.data
+}
+
+const updateAddBackgroundImages = async ({ id, body }) => {
+  const response = await API.patch(`${API_ROUTES.ADMIN.PATCH_BG_IMAGES.replace(':id', id)}`, body)
   return response.data
 }
 
@@ -105,9 +147,16 @@ export {
   fetchQuestion,
   fetchAllJumbleOpt,
   fetchAllBgImg,
+  fetchAllTime,
+  fetchAllModalConfig,
   adminAddQuestion,
   adminAddJumbleWord,
   adminAddBackgroundImages,
+  adminAddTime,
+  adminUpdateTime,
+  adminAddValues,
+  adminUpdateValue,
+  updateAddBackgroundImages,
   updateUser,
   updateAdminProfile,
   updateAdminQuestion,

@@ -135,19 +135,6 @@ const handleSubmit = async () => {
     }
   }
 }
-
-const breadcrumbItems = [
-  {
-    title: 'User List',
-    disabled: false,
-    to: ROUTES.USER_LIST,
-  },
-  {
-    title: 'Admin Jumble Word',
-    disabled: true,
-    to: ROUTES.ADMIN_ADD_JUMBLE_WORD,
-  },
-]
 </script>
 
 <template>
@@ -157,7 +144,7 @@ const breadcrumbItems = [
       <Navigator />
     </div>
 
-    <BreadCrumb :items="breadcrumbItems" />
+    <BreadCrumb />
 
     <Loader v-if="isFetchingWords || isDeletingJumbleWords" />
 

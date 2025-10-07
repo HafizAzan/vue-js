@@ -4,7 +4,6 @@ export const API_ROUTES = {
   REGISTER: `/api/user/signup-user`,
   GET_QUESTION: `/api/user/get-question`,
   SECURITY_ANSWER: `/api/user/:userId/security-answers`,
-  VALUES: '/api/array/items',
   GET_ALL_USERS: '/api/user/get-users-data',
   UPDATE_USERS: '/api/user/:itemId/update-user',
   UPDATE_VALUES: `/api/array/item-update/:userId`,
@@ -16,6 +15,9 @@ export const API_ROUTES = {
   GET_SINGLE_USER: `/api/user/get-user/:userId`,
   POST_ADD_PLAY_DATA: `/api/play`,
   FILTER_PLAY_LEVELS: `/api/play/levels`,
+  VALUES: '/api/array/items',
+  GET_VALUE_BY_ID: `/api/array/items/:itemId`,
+  DELETE_VALUE: `/api/array/item-delete/:itemId`,
 
   ADMIN: {
     PROFILE: `/api/admin/admin-data`,
@@ -38,5 +40,16 @@ export const API_ROUTES = {
     GET_BG_IMAGES: '/api/admin/bg-img',
     PATCH_BG_IMAGES: '/api/admin/bg-img/:id',
     DELETE_BG_IMAGES: '/api/admin/bg-img/:id',
+
+    GET_ALL_TIME: `/api/time/get-time`,
+    POST_ALL_TIME: `/api/time/create-time`,
+    PATCH_ALL_TIME: `/api/time/update-time`,
+
+    DOWNLOAD_CSV: `/api/user/generate-csv/all-users-play`,
+
+    POST_VALUE: `/api/array/item-add`,
+    PATCH_VALUE: `/api/array/item-update/:itemId`,
+
+    GET_MODAL: `/api/admin/models`,
   },
 }
