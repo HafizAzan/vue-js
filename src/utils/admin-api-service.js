@@ -41,6 +41,11 @@ const fetchAllModalConfig = async () => {
   return response.data
 }
 
+const adminAddModalConfig = async (body) => {
+  const response = await API.post(`${API_ROUTES.ADMIN.POST_MODAL}`, body)
+  return response.data
+}
+
 const adminAddQuestion = async (body) => {
   const response = await API.post(`${API_ROUTES.ADMIN.ADD_QUESTION}`, body)
   return response.data
@@ -75,6 +80,11 @@ const adminAddValues = async (body, config = {}) => {
 
 const adminUpdateTime = async (body) => {
   const response = await API.patch(`${API_ROUTES.ADMIN.PATCH_ALL_TIME}`, body)
+  return response.data
+}
+
+const adminUpdateModalConfig = async ({ id, body }) => {
+  const response = await API.patch(`${API_ROUTES.ADMIN.PATCH_MODAL?.replace(':id', id)}`, body)
   return response.data
 }
 
@@ -155,6 +165,8 @@ export {
   adminAddTime,
   adminUpdateTime,
   adminAddValues,
+  adminAddModalConfig,
+  adminUpdateModalConfig,
   adminUpdateValue,
   updateAddBackgroundImages,
   updateUser,

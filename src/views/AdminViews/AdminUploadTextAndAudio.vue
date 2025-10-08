@@ -3,11 +3,16 @@ import Button from '@/components/Button.vue'
 import Loader from '@/components/Loader.vue'
 import Navigator from '@/components/Navigator.vue'
 import AudioAndVolume from '@/components/Steps/AudioAndVolume.vue'
+import Blur from '@/components/Steps/Blur.vue'
 import ModalText from '@/components/Steps/ModalText.vue'
 import Textarea from '@/components/Textarea.vue'
-import { fetchAllModalConfig } from '@/utils/admin-api-service'
-import { audioFile, modalConfig } from '@/utils/constant'
-import { useQuery } from '@tanstack/vue-query'
+import {
+  adminAddModalConfig,
+  adminUpdateModalConfig,
+  fetchAllModalConfig,
+} from '@/utils/admin-api-service'
+import { audioFile, blurConfig, modalConfig } from '@/utils/constant'
+import { useMutation, useQuery } from '@tanstack/vue-query'
 import { reactive, ref, watch, watchEffect } from 'vue'
 
 const defaultModalTexts = reactive({
@@ -25,11 +30,26 @@ const defaultModalTexts = reactive({
   opacityLow: '',
   opacityMedium: '',
   opacityHigh: '',
+  _id: '',
 })
 
-const { data: getAllModal, isLoading: isGettingModalText } = useQuery({
+const {
+  data: getAllModal,
+  isLoading: isGettingModalText,
+  refetch: refetchAllModal,
+} = useQuery({
   queryKey: ['get-all-models'],
   queryFn: fetchAllModalConfig,
+})
+
+const { mutateAsync: addModalTextAudio, isPending: isAddingModal } = useMutation({
+  mutationKey: ['post-modal-text-audio-blur'],
+  mutationFn: (body) => adminAddModalConfig(body),
+})
+
+const { mutateAsync: updateModalTextAudio, isPending: isUpdatingModal } = useMutation({
+  mutationKey: ['update-modal-text-audio-blur'],
+  mutationFn: ({ id, body }) => adminUpdateModalConfig({ id, body }),
 })
 
 watchEffect(() => {
@@ -55,30 +75,71 @@ const selectStepHandler = (type) => {
       <Navigator />
     </div>
 
-    <Loader v-if="isGettingModalText" />
+    <Loader v-if="isGettingModalText || isUpdatingModal" />
 
     <main class="main-tab">
-      <Button @click="selectStepHandler('modal')" button-text="Step : 01 Add Modal Text" />
-      <Button @click="selectStepHandler('audio')" button-text="Step : 02 Add Audio & Volume" />
-      <Button @click="selectStepHandler('blur')" button-text="Step : 03 Add BLur/Opacity" />
+      <Button
+        @click="selectStepHandler('modal')"
+        :style="{
+          backgroundColor: stepSave === 'modal' ? '#ff4d4f' : 'transparent',
+          borderColor: stepSave === 'modal' ? '#ff4d4f' : 'white',
+        }"
+        button-text="Step : 01 Add Modal Text"
+      />
+
+      <Button
+        @click="selectStepHandler('audio')"
+        :style="{
+          backgroundColor: stepSave === 'audio' ? '#ff4d4f' : 'transparent',
+          borderColor: stepSave === 'audio' ? '#ff4d4f' : 'white',
+        }"
+        button-text="Step : 02 Add Audio & Volume"
+      />
+
+      <Button
+        @click="selectStepHandler('blur')"
+        :style="{
+          backgroundColor: stepSave === 'blur' ? '#ff4d4f' : 'transparent',
+          borderColor: stepSave === 'blur' ? '#ff4d4f' : 'white',
+        }"
+        button-text="Step : 03 Add BLur/Opacity"
+      />
     </main>
 
     <ModalText
       :modal-config="modalConfig"
       :default-modal-texts="defaultModalTexts"
       v-if="stepSave === 'modal'"
+      :update="updateModalTextAudio"
+      :refetch="refetchAllModal"
+      :nextStep="stepSave"
+      @next-step="selectStepHandler"
     />
 
     <AudioAndVolume
       :modal-config="audioFile"
       :default-modal-texts="defaultModalTexts"
-      :audioUrl="defaultModalTexts.audioFile"
+      :audioFile="defaultModalTexts.audioFile"
       v-if="stepSave === 'audio'"
+      :update="updateModalTextAudio"
+      :refetch="refetchAllModal"
+      :nextStep="stepSave"
+      @next-step="selectStepHandler"
     />
 
-    <div class="save-all-btn">
+    <Blur
+      :modal-config="blurConfig"
+      :default-modal-texts="defaultModalTexts"
+      v-if="stepSave === 'blur'"
+      :update="updateModalTextAudio"
+      :refetch="refetchAllModal"
+      :nextStep="stepSave"
+      @next-step="selectStepHandler"
+    />
+
+    <!-- <div class="save-all-btn">
       <Button button-text="Save All" disabled />
-    </div>
+    </div> -->
   </section>
 </template>
 
@@ -132,7 +193,6 @@ const selectStepHandler = (type) => {
   height: 98% !important;
   border-radius: 0px !important;
   min-height: 98%;
-  background-color: transparent !important;
   border: 1px solid white;
   font-size: 1.3rem !important;
   font-weight: 700 !important;

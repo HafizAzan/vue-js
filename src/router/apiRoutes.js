@@ -51,5 +51,8 @@ export const API_ROUTES = {
     PATCH_VALUE: `/api/array/item-update/:itemId`,
 
     GET_MODAL: `/api/admin/models`,
+    POST_MODAL: `/api/admin/models`,
+    PATCH_MODAL: `/api/admin/models/:id`,
+    DELETE_MODAL: `/api/admin/models/:id`,
   },
 }

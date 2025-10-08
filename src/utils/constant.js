@@ -179,7 +179,13 @@ export const modalConfig = [
 ]
 
 export const audioFile = [
-  { key: 'low', heading: 'Low Audio' },
-  { key: 'medium', heading: 'Medium Audio' },
   { key: 'high', heading: 'High Audio' },
+  { key: 'medium', heading: 'Medium Audio' },
+  { key: 'low', heading: 'Low Audio' },
+]
+
+export const blurConfig = [
+  { key: 'opacityHigh', heading: 'High Blur' },
+  { key: 'opacityMedium', heading: 'Medium Blur' },
+  { key: 'opacityLow', heading: 'Low Blur' },
 ]

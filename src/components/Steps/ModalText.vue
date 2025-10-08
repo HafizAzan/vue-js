@@ -1,8 +1,9 @@
-```vue
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, reactive, computed } from 'vue'
 import Button from '../Button.vue'
 import Textarea from '../Textarea.vue'
+import { VIcon } from 'vuetify/components'
+import { toast } from 'vue-sonner'
 
 const props = defineProps({
   modalConfig: {
@@ -13,10 +14,62 @@ const props = defineProps({
     type: Object,
     default: () => ({}),
   },
+  update: {
+    type: Function,
+    default: () => {},
+  },
+  refetch: {
+    type: Function,
+    default: () => {},
+  },
+  nextStep: {
+    type: String,
+    default: 'modal',
+  },
 })
 
-const handleFileUpload = (key) => {
-  console.log('File upload clicked for:', key)
+const emit = defineEmits(['next-step'])
+
+const editableFields = reactive({})
+props.modalConfig.forEach((item) => {
+  editableFields[item.key] = false
+})
+
+const toggleEdit = (key) => {
+  editableFields[key] = !editableFields[key]
+}
+
+const updateModal = async (single) => {
+  const formData = new FormData()
+  const value = props.defaultModalTexts[single?.key]
+  formData.append(single?.key, value)
+
+  const response = await props.update({ id: props.defaultModalTexts?._id, body: formData })
+
+  if (response?.error) {
+    toast.error(response?.error?.message || 'Failed To Update')
+  } else {
+    toast.success(response?.message || 'Updated Successfully!')
+    editableFields[single?.key] = false
+    await props.refetch()
+  }
+}
+
+const isAllFieldsFilled = computed(() => {
+  const allFilled = props.modalConfig.every((item) => {
+    const value = props.defaultModalTexts[item.key]
+    return value !== '' && value !== null && value !== undefined
+  })
+
+  const anyEditing = Object.values(editableFields).some((isEditing) => isEditing)
+  return allFilled && !anyEditing
+})
+
+const stepChange = () => {
+  const steps = ['modal', 'audio', 'blur']
+  const currentIndex = steps.indexOf(props.nextStep)
+  const next = steps[currentIndex + 1] || 'modal'
+  emit('next-step', next)
 }
 </script>
 
@@ -28,22 +81,34 @@ const handleFileUpload = (key) => {
           <div class="upload-title">
             <h4 class="card-box-title">{{ single?.heading }}</h4>
           </div>
-          <v-icon color="grey">mdi-pencil</v-icon>
+
+          <v-icon color="grey" class="upload-icon" @click="toggleEdit(single.key)">
+            {{ editableFields[single.key] ? 'mdi-check' : 'mdi-pencil' }}
+          </v-icon>
         </div>
 
         <div class="textarea-group">
           <Textarea
-            :model-value="defaultModalTexts[single.key]"
-            label="Low"
+            v-model="props.defaultModalTexts[single.key]"
+            :label="single.heading"
             rows="2"
-            placeholder="Enter low description..."
+            placeholder="Enter description..."
+            :readonly="!editableFields[single.key]"
+          />
+        </div>
+
+        <div class="next-btn">
+          <Button
+            button-text="Update"
+            v-if="editableFields[single.key]"
+            @click="updateModal(single)"
           />
         </div>
       </div>
     </div>
 
     <div class="next-btn">
-      <Button button-text="Next" />
+      <Button button-text="Next" :disabled="!isAllFieldsFilled" @click="stepChange" />
     </div>
   </main>
 </template>
@@ -117,4 +182,3 @@ const handleFileUpload = (key) => {
   margin-top: 20px;
 }
 </style>
-```

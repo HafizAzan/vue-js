@@ -1,5 +1,7 @@
 <script setup>
-import { VSlider } from 'vuetify/components'
+import { ref, reactive } from 'vue'
+import Button from '../Button.vue'
+import { toast } from 'vue-sonner'
 
 const props = defineProps({
   modalConfig: {
@@ -10,11 +12,105 @@ const props = defineProps({
     type: Object,
     default: () => ({}),
   },
-  audioUrl: {
+  audioFile: {
     type: String,
     default: '',
   },
+  update: {
+    type: Function,
+    default: () => {},
+  },
+  refetch: {
+    type: Function,
+    default: () => {},
+  },
+  nextStep: {
+    type: String,
+    default: 'modal',
+  },
 })
+
+const editableFields = reactive({})
+props.modalConfig.forEach((item) => {
+  editableFields[item.key] = false
+})
+
+const toggleEdit = (key) => {
+  editableFields[key] = !editableFields[key]
+}
+
+const updateSlider = async (single) => {
+  const formData = new FormData()
+  const value = props.defaultModalTexts[single.key]
+  formData.append(single.key, value)
+
+  const response = await props.update({
+    id: props.defaultModalTexts._id,
+    body: formData,
+  })
+
+  if (response?.error) {
+    toast.error(response?.error?.message || 'Failed To Update')
+  } else {
+    toast.success(response?.message || 'Slider updated successfully!')
+    editableFields[single.key] = false
+    await props.refetch()
+  }
+}
+
+const audioInputRef = ref(null)
+const selectedAudio = ref(props.audioFile || '')
+const audioPlayer = ref(null)
+const isPlaying = reactive({})
+
+const handleAudioUploadClick = () => {
+  audioInputRef.value?.click()
+}
+
+const handleAudioChange = async (e) => {
+  const file = e.target.files[0]
+  if (!file) return
+
+  const formData = new FormData()
+  formData.append('audioFile', file)
+
+  const response = await props.update({
+    id: props.defaultModalTexts._id,
+    body: formData,
+  })
+
+  if (response?.error) {
+    toast.error(response?.error?.message || 'Audio upload failed!')
+  } else {
+    toast.success(response?.message || 'Audio uploaded successfully!')
+    selectedAudio.value = URL.createObjectURL(file)
+    await props.refetch()
+  }
+}
+
+const togglePlay = (key) => {
+  if (!audioPlayer.value) return
+  const player = audioPlayer.value
+
+  if (isPlaying[key]) {
+    player.pause()
+    isPlaying[key] = false
+    return
+  }
+
+  Object.keys(isPlaying).forEach((k) => (isPlaying[k] = false))
+
+  const volume = props.defaultModalTexts[key] ?? 0.5
+  player.volume = volume
+
+  player.currentTime = 0
+  player.play()
+  isPlaying[key] = true
+
+  player.onended = () => {
+    isPlaying[key] = false
+  }
+}
 </script>
 
 <template>
@@ -23,25 +119,69 @@ const props = defineProps({
       <div class="sliders-audio-row">
         <div class="sliders-wrapper">
           <div v-for="(opt, index) in modalConfig" :key="index" class="slider-group">
-            <label>{{ opt.heading }}</label>
+            <div class="slider-header">
+              <label>{{ opt.heading }}</label>
+
+              <div class="icons-wrapper">
+                <v-icon color="grey" class="upload-icon" size="20" @click="togglePlay(opt.key)">
+                  {{ isPlaying[opt.key] ? 'mdi-pause' : 'mdi-play' }}
+                </v-icon>
+
+                <v-icon color="grey" size="18" class="edit-icon" @click="toggleEdit(opt.key)">
+                  {{ editableFields[opt.key] ? 'mdi-check' : 'mdi-pencil' }}
+                </v-icon>
+              </div>
+            </div>
+
             <v-slider
               v-model="props.defaultModalTexts[opt.key]"
               color="blue-lighten-2"
               track-color="#444"
               thumb-color="white"
-              max="100"
               min="0"
-              step="1"
+              max="1"
+              step="0.01"
               thumb-label="always"
-            />
+              :readonly="!editableFields[opt.key]"
+            >
+              <template #thumb-label="{ modelValue }">
+                {{ Math.round(modelValue * 100) }}%
+              </template>
+            </v-slider>
+
+            <div class="update-btn" v-if="editableFields[opt.key]">
+              <Button button-text="Update" @click="updateSlider(opt)" />
+            </div>
           </div>
         </div>
 
         <div class="audio-section">
           <label>Audio File</label>
-          <audio v-if="audioUrl" :src="audioUrl" controls class="audio-player"></audio>
-          <div v-else class="no-audio">No audio available</div>
+          <div v-if="selectedAudio && selectedAudio !== ''" class="main-audio-wrapper">
+            <v-icon color="black" class="audio-icon" size="18" @click="handleAudioUploadClick">
+              mdi-pencil
+            </v-icon>
+
+            <audio ref="audioPlayer" :src="selectedAudio" class="audio-player" controls></audio>
+          </div>
+
+          <div v-else class="no-audio" @click="handleAudioUploadClick">
+            <v-icon size="100">mdi-file-upload</v-icon>
+            <p>Upload Audio</p>
+          </div>
+
+          <input
+            type="file"
+            accept="audio/*"
+            ref="audioInputRef"
+            hidden
+            @change="handleAudioChange"
+          />
         </div>
+      </div>
+
+      <div class="next-btn">
+        <Button button-text="Next" @click="$emit('next-step', 'blur')" />
       </div>
     </div>
   </section>
@@ -78,11 +218,32 @@ const props = defineProps({
   width: 70%;
 }
 
-.slider-group label {
-  font-size: 0.9rem;
-  color: #aaa;
-  margin-bottom: 4px;
-  display: block;
+.slider-group {
+  background-color: #1f1f2f;
+  padding: 15px;
+  border-radius: 8px;
+}
+
+.slider-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.edit-icon {
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.edit-icon:hover {
+  transform: scale(1.1);
+}
+
+.update-btn {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 10px;
 }
 
 .audio-section {
@@ -91,6 +252,7 @@ const props = defineProps({
   flex-direction: column;
   align-items: flex-start;
   justify-content: center;
+  position: relative;
 }
 
 .audio-section label {
@@ -99,8 +261,16 @@ const props = defineProps({
   margin-bottom: 6px;
 }
 
-.audio-player {
+.main-audio-wrapper {
   width: 100%;
+  outline: none;
+  border-radius: 8px;
+  background-color: #f1f3f4;
+  position: relative;
+}
+
+.audio-player {
+  width: 95%;
   outline: none;
   border-radius: 8px;
 }
@@ -108,5 +278,26 @@ const props = defineProps({
 .no-audio {
   color: #888;
   font-size: 0.85rem;
+}
+
+.audio-icon {
+  position: absolute;
+  right: 12px;
+  z-index: 100;
+  top: 18px;
+  cursor: pointer;
+}
+
+.next-btn {
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+  margin-top: 20px;
+}
+
+.icons-wrapper {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
 }
 </style>
