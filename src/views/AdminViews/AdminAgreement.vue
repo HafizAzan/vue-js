@@ -110,7 +110,7 @@ const modalStyle = {
 <template>
   <section class="container">
     <div class="content">
-      <v-typography variants="h3" class="text-h3 h3">Admin Agreement</v-typography>
+      <v-typography variants="h3" class="text-sm-h3 text-h4 h3">Admin Agreement</v-typography>
       <Navigator />
     </div>
 
@@ -240,6 +240,14 @@ const modalStyle = {
   font-size: 1.8rem !important;
   font-weight: 400 !important;
   color: #fff;
+}
+
+@media (max-width: 600px) {
+  .card-box-title {
+    font-size: 1.4rem !important;
+    font-weight: 400 !important;
+    color: #fff;
+  }
 }
 
 .wrapper-icons {

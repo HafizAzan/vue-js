@@ -117,7 +117,7 @@ const handlePasswordSubmit = async () => {
 <template>
   <main class="container">
     <div class="content">
-      <v-typography variants="h3" class="text-h3 h3">Admin Profile</v-typography>
+      <v-typography variants="h3" class="text-sm-h3 text-h4 h3">Admin Profile</v-typography>
       <Navigator />
     </div>
 
@@ -157,7 +157,12 @@ const handlePasswordSubmit = async () => {
           <Button button-text="Update Password" @click="editModal('password')" />
         </div>
 
-        <Modal v-model="openInfoModal" v-if="openInfoModal === 'all'" max-width="450">
+        <Modal
+          v-model="openInfoModal"
+          v-if="openInfoModal === 'all'"
+          max-width="450"
+          :show-actions="false"
+        >
           <template #title>
             <p class="form-title">Edit Admin Info</p>
           </template>
@@ -181,7 +186,12 @@ const handlePasswordSubmit = async () => {
           </v-form>
         </Modal>
 
-        <Modal v-model="openInfoModal" v-if="openInfoModal === 'password'" max-width="450">
+        <Modal
+          v-model="openInfoModal"
+          v-if="openInfoModal === 'password'"
+          max-width="450"
+          :show-actions="false"
+        >
           <template #title>
             <p class="form-title">Edit Admin Password</p>
           </template>
@@ -230,6 +240,7 @@ const handlePasswordSubmit = async () => {
   justify-content: center;
   align-items: center;
   margin-top: 3rem;
+  margin-bottom: 3rem;
 }
 
 .card {
@@ -238,6 +249,16 @@ const handlePasswordSubmit = async () => {
   height: 100%;
   border-radius: 10px;
   padding: 30px 35px;
+}
+
+@media (max-width: 400px) {
+  .card {
+    background: linear-gradient(45deg, #6a11cb 0%, #2575fc 100%);
+    width: 20rem;
+    height: 100%;
+    border-radius: 10px;
+    padding: 30px 20px;
+  }
 }
 
 .card-header {
@@ -275,7 +296,10 @@ const handlePasswordSubmit = async () => {
 }
 
 .card-btn {
-  width: 45%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
   margin: 0 auto;
   margin-top: 25px;
 }
@@ -294,6 +318,7 @@ const handlePasswordSubmit = async () => {
 
 .form-title {
   font-size: 2.4rem;
+  padding-top: 20px;
 }
 
 .main-input {

@@ -6,6 +6,11 @@ const fetchAllUser = async ({ page = '1' }) => {
   return response.data
 }
 
+const fetchAllUserData = async () => {
+  const response = await API.get(`${API_ROUTES.ADMIN.GET_ALL_USERS_DATA}`)
+  return response.data
+}
+
 const fetchUserId = async (userId) => {
   const response = await API.get(`${API_ROUTES.ADMIN.GET_SINGLE_USER?.replace(':userId', userId)}`)
   return response.data
@@ -180,6 +185,7 @@ export {
   fetchAllTime,
   fetchAllModalConfig,
   fetchAllAgreement,
+  fetchAllUserData,
   adminAddAgreement,
   adminAddQuestion,
   adminAddJumbleWord,

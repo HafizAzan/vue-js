@@ -170,7 +170,9 @@ const handleUploadImages = async () => {
 <template>
   <section class="container" id="add-background-images">
     <div class="content">
-      <v-typography variants="h3" class="text-h3 h3">Admin Add Background Images</v-typography>
+      <v-typography variants="h3" class="text-sm-h3 text-h4 h3"
+        >Admin Add Background Images</v-typography
+      >
       <Navigator />
     </div>
 
@@ -226,6 +228,8 @@ const handleUploadImages = async () => {
   gap: 20px;
   flex-flow: row wrap;
   margin-bottom: 20px;
+  justify-content: stretch;
+  background-color: transparent !important;
 }
 
 .card-box {

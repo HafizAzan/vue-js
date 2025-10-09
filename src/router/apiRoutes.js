@@ -23,6 +23,7 @@ export const API_ROUTES = {
     PROFILE: `/api/admin/admin-data`,
     UPDATE_PROFILE: `/api/admin/update-admin/:adminId`,
     GET_USERS_LIST: `/api/user/get-users`,
+    GET_ALL_USERS_DATA: `/api/user/get-users-data`,
     GET_SINGLE_USER: `/api/user/get-user/:userId`,
     USER_REPORT: `/api/user/download-user-play-pdf`,
     UPDATE_USER: `/api/user/:userId/update-user`,

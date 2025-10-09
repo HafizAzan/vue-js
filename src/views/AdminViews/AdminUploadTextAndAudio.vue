@@ -80,7 +80,9 @@ watch(defaultModalTexts, (val) => {
 <template>
   <section class="container">
     <div class="content">
-      <v-typography variants="h3" class="text-h3 h3">Upload Modal Text And Audio</v-typography>
+      <v-typography variants="h3" class="text-sm-h3 text-h4 h3"
+        >Upload Modal Text And Audio</v-typography
+      >
       <Navigator />
     </div>
 
@@ -189,6 +191,8 @@ watch(defaultModalTexts, (val) => {
   align-items: center;
   width: 100%;
   padding-bottom: 10px;
+  flex-flow: row wrap;
+  gap: 10px;
 }
 
 .heading .card-box-title,
@@ -204,9 +208,9 @@ watch(defaultModalTexts, (val) => {
   margin-bottom: 20px;
   align-items: center;
   justify-content: space-between;
-  height: 5rem;
   border-radius: 10px;
   gap: 5px;
+  flex-wrap: wrap;
 }
 
 .main-tab button {

@@ -10,12 +10,14 @@ import Tooltip from '@/components/Tooltip.vue'
 import UploadCSV from '@/components/UploadCSV.vue'
 import { ROUTES } from '@/router'
 import { API_ROUTES } from '@/router/apiRoutes'
+import DropDownVue from '@/components/DropDown.vue'
 import {
   adminAddTime,
   adminUpdateTime,
   deleteUserById,
   fetchAllTime,
   fetchAllUser,
+  fetchAllUserData,
   fetchUserId,
   updateUser,
 } from '@/utils/admin-api-service'
@@ -62,6 +64,15 @@ const {
   queryFn: fetchAllValues,
 })
 
+const {
+  data: GetAllUserData,
+  isLoading: isAllUserLoading,
+  refetch: refetAllUserData,
+} = useQuery({
+  queryKey: ['get-all-user-data'],
+  queryFn: fetchAllUserData,
+})
+
 const { mutateAsync: addTime, isPending: isAddingTime } = useMutation({
   mutationKey: ['add-time'],
   mutationFn: (body) => adminAddTime(body),
@@ -105,6 +116,7 @@ const { mutateAsync: deleteUser, isPending: isDeletingUser } = useMutation({
 
 const openDialog = ref(null)
 const isEditingTime = ref(false)
+const arrayValues = computed(() => allValues?.value?.data?.A)
 const totalPages = computed(() => getAllUsers?.value?.totalPages || 1)
 const users = computed(() => getAllUsers?.value?.users || [])
 const page = computed({
@@ -312,12 +324,63 @@ const timerHandler = async () => {
   isEditingTime.value = false
   openDialog.value = null
 }
+
+const arrayAssign = (singleRow) => {
+  const allUsers = GetAllUserData?.value?.value ?? []
+  const assignedSections = allUsers.map((user) => user.section).filter(Boolean)
+
+  return (
+    arrayValues?.value
+      ?.filter(
+        (item) =>
+          (Array.isArray(item?.items) &&
+            item.items.length > 0 &&
+            !assignedSections.includes(item.section)) ||
+          item.section === singleRow?.section,
+      )
+      ?.sort((a, b) => {
+        const aNum = parseInt(a.section.replace('section', ''), 10)
+        const bNum = parseInt(b.section.replace('section', ''), 10)
+        return aNum - bNum
+      })
+      ?.map((item) => {
+        return {
+          title: item.section,
+          id: item._id,
+          raw: item,
+          isSelected: item.section === singleRow?.section,
+        }
+      }) ?? []
+  )
+}
+
+const selectSectionHandler = async (item, userId) => {
+  const userData = {
+    items: item?.raw?.items,
+    section: item?.title,
+  }
+
+  const res = await editSingleUser({
+    userId: userId,
+    userData: userData,
+  })
+
+  if (res?.error) {
+    toast.error(res?.error?.message || 'Failed To Assign Array Please Try Again Later!')
+  } else {
+    toast.success(res?.data?.message || 'Array Assign SuccessFully!')
+    arrayAssign(item?.raw)
+    fetchUserId(userId)
+    await refetAllUserData()
+    await refetcAllValues()
+  }
+}
 </script>
 
 <template>
   <main class="container">
     <div class="content">
-      <v-typography variants="h3" class="text-h3 h3">User List</v-typography>
+      <v-typography variants="h3" class="text-sm-h3 text-h4 h3">User List</v-typography>
 
       <div class="nav-icon">
         <UploadCSV :refetch="refetcAllValues" />
@@ -343,7 +406,9 @@ const timerHandler = async () => {
         isGetSingleUser ||
         isGetAllTimeLoader ||
         isFetchingTime ||
-        isValueLoading
+        isValueLoading ||
+        isAllUserLoading ||
+        isUpdatingUser
       "
       color="white"
     />
@@ -351,14 +416,23 @@ const timerHandler = async () => {
     <div v-else class="main-content-table">
       <Table :headers="userListHeaders" :items="users">
         <template #item.createdAt="{ item }">
-          <div>
+          <div class="ellipsis">
             <span>{{ formatDateTimeUTC(item?.createdAt) }}</span>
           </div>
         </template>
 
         <template #item.actions="{ item }">
           <div class="action-icons">
-            <v-icon>mdi-account-group</v-icon>
+            <DropDownVue
+              :key="item._id + '-' + (item.section || 'unassigned') + '-' + date"
+              :selected="item.section"
+              :items="arrayAssign(item)"
+              defaultLocation="bottom"
+              :prepend-icon="'mdi-account-group'"
+              button-text="H"
+              @select="(val) => selectSectionHandler(val, item?._id)"
+            />
+
             <v-icon @click="navigateUserDetail(item)">mdi-eye</v-icon>
             <v-icon @click="editModal(item?._id)">mdi-pencil</v-icon>
             <v-icon @click="openModal(item?._id)">mdi-trash-can-outline</v-icon>
@@ -373,6 +447,7 @@ const timerHandler = async () => {
         v-model="openDialog"
         v-if="openDialog === 'timer'"
         max-width="450"
+        :showActions="false"
         @disagree="
           () => {
             openDialog = null
@@ -384,7 +459,9 @@ const timerHandler = async () => {
           <div class="sub-header">
             <p class="form-title">{{ isEditingTime ? 'Update' : 'Set' }} Time</p>
             <Tooltip text="Edit">
-              <v-icon @click="editTimeForm">mdi-pencil</v-icon>
+              <v-icon @click="editTimeForm">{{
+                isEditingTime ? 'mdi-check' : 'mdi-pencil'
+              }}</v-icon>
             </Tooltip>
           </div>
         </template>
@@ -452,9 +529,11 @@ const timerHandler = async () => {
         </p>
       </Modal>
 
-      <Modal v-model="editId" max-width="450">
+      <Modal v-model="editId" max-width="450" :show-actions="false">
         <template #title>
-          <p class="form-title">Edit User Info</p>
+          <div class="pt-5">
+            <p class="form-title">Edit User Info</p>
+          </div>
         </template>
 
         <v-form fast-fail @submit.prevent="handleSubmit" class="auth-form">
@@ -564,6 +643,7 @@ const timerHandler = async () => {
   justify-content: space-between;
   align-items: center;
   padding: 0px 40px;
+  padding-top: 20px;
 }
 
 .sub-header .v-icon {
@@ -578,5 +658,12 @@ const timerHandler = async () => {
     align-items: center;
     justify-content: center;
   }
+}
+
+.ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: 100%;
 }
 </style>

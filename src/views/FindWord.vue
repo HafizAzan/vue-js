@@ -631,7 +631,7 @@ const level = playAgainLevel ?? playStore.getLevel()
         :close-on-outside-click="false"
       >
         <template #prependIcon>
-          <span class="my-loader" aria-hidden="true"></span>
+          <span class="my-loader mt-10" aria-hidden="true"></span>
         </template>
 
         <template #title>
@@ -808,7 +808,7 @@ const level = playAgainLevel ?? playStore.getLevel()
   font-weight: 700;
   position: absolute;
   top: 105px;
-  left: 75px;
+  left: 200px;
   text-transform: capitalize;
   transition: all ease 200ms;
 }

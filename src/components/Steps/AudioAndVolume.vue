@@ -249,13 +249,14 @@ const stepChange = () => {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
+  flex-wrap: wrap;
 }
 
 .sliders-wrapper {
   display: flex;
   flex-direction: column;
   gap: 20px;
-  width: 70%;
+  width: 100%;
 }
 
 .slider-group {
@@ -287,7 +288,9 @@ const stepChange = () => {
 }
 
 .audio-section {
-  width: 28%;
+  max-width: 30%;
+  width: 30%;
+  min-width: 100%;
   display: flex;
   flex-direction: column;
   align-items: flex-start;

@@ -151,7 +151,8 @@ const stepChange = () => {
 
 .card-box {
   background-color: #2a2a3d;
-  flex-basis: 48%;
+  /* flex-basis: 48%; */
+  flex: 1 1 auto;
   border-radius: 10px;
   padding: 20px;
   color: white;

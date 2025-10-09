@@ -140,7 +140,7 @@ const handleSubmit = async () => {
 <template>
   <section class="container">
     <div class="content">
-      <v-typography variants="h3" class="text-h3 h3">Admin Jumble Word</v-typography>
+      <v-typography variants="h3" class="text-sm-h3 text-h4 h3">Admin Jumble Word</v-typography>
       <Navigator />
     </div>
 
@@ -237,6 +237,7 @@ const handleSubmit = async () => {
   width: 100%;
   /* height: 500px; */
   border-radius: 10px;
+  margin-bottom: 10px;
 }
 
 .main-input {

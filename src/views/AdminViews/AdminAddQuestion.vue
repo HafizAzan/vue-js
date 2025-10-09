@@ -104,7 +104,7 @@ const cancle = () => {
 <template>
   <main class="container pb-5">
     <div class="content">
-      <v-typography variants="h3" class="text-h3 h3"
+      <v-typography variants="h3" class="text-sm-h3 text-h4 h3"
         >Admin {{ form.id ? 'Update' : 'Add' }} Question</v-typography
       >
       <Navigator />

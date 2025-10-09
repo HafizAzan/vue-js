@@ -4,10 +4,12 @@ import { useRouter, useRoute } from 'vue-router'
 import logo from '@/assets/logo.svg'
 import { ROUTES } from '@/router'
 import Tooltip from './Tooltip.vue'
+import { useUserStore } from '@/store/useUserStore'
 
 const drawer = ref(false)
 const router = useRouter()
 const route = useRoute()
+const user = useUserStore()
 
 const toggleDrawer = () => {
   drawer.value = !drawer.value
@@ -55,19 +57,26 @@ const navigateTo = (path) => {
   router.push(path)
   drawer.value = false
 }
+
+const logout = () => {
+  drawer.value = false
+  user.resetToken()
+  router.push(ROUTES.LOGIN)
+}
 </script>
 
 <template>
   <v-layout>
     <div class="icon" @click="toggleDrawer">
       <Tooltip text="Menu">
-        <v-icon>mdi-menu</v-icon>
+        <v-icon size="50">mdi-menu</v-icon>
       </Tooltip>
     </div>
 
     <v-navigation-drawer v-model="drawer" class="navigator" theme="dark" temporary width="300">
       <div class="logo">
         <img :src="logo" alt="Logo" />
+        <v-icon size="50" @click="drawer = false"> mdi-window-close</v-icon>
       </div>
 
       <v-list color="transparent">
@@ -83,7 +92,7 @@ const navigateTo = (path) => {
 
       <template v-slot:append>
         <div class="pa-2">
-          <v-btn block @click="drawer = false">Logout</v-btn>
+          <v-btn block @click="logout">Logout</v-btn>
         </div>
       </template>
     </v-navigation-drawer>
@@ -110,9 +119,10 @@ const navigateTo = (path) => {
 
 .logo {
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
+  padding: 0px 20px;
 }
 
 .logo img {
