@@ -330,9 +330,7 @@ const timerHandler = async () => {
           <v-icon @click="openTimerModal('timer')">mdi-clock-time-four-outline</v-icon>
         </Tooltip>
 
-        <Tooltip text="Menu">
-          <Navigator />
-        </Tooltip>
+        <Navigator />
       </div>
     </div>
 

@@ -41,6 +41,16 @@ const fetchAllModalConfig = async () => {
   return response.data
 }
 
+const fetchAllAgreement = async () => {
+  const response = await API.get(API_ROUTES.ADMIN.GET_AGREEMENT)
+  return response.data
+}
+
+const adminAddAgreement = async (body) => {
+  const response = await API.post(`${API_ROUTES.ADMIN.POST_AGREEMENT}`, body)
+  return response.data
+}
+
 const adminAddModalConfig = async (body) => {
   const response = await API.post(`${API_ROUTES.ADMIN.POST_MODAL}`, body)
   return response.data
@@ -80,6 +90,11 @@ const adminAddValues = async (body, config = {}) => {
 
 const adminUpdateTime = async (body) => {
   const response = await API.patch(`${API_ROUTES.ADMIN.PATCH_ALL_TIME}`, body)
+  return response.data
+}
+
+const adminUpdateAgreement = async ({ id, body }) => {
+  const response = await API.patch(`${API_ROUTES.ADMIN.PATCH_AGREEMENT?.replace(':id', id)}`, body)
   return response.data
 }
 
@@ -131,6 +146,11 @@ const updateUser = async ({ userId, userData }) => {
   return response.data
 }
 
+const deleteAgreementById = async (id) => {
+  const response = await API.delete(`${API_ROUTES.ADMIN.DELETE_AGREEMENT?.replace(':id', id)}`)
+  return response.data
+}
+
 const deleteQuestionById = async (questionId) => {
   const response = await API.delete(
     `${API_ROUTES.ADMIN.DELETE_QUESTION?.replace(':questionId', questionId)}`,
@@ -159,10 +179,13 @@ export {
   fetchAllBgImg,
   fetchAllTime,
   fetchAllModalConfig,
+  fetchAllAgreement,
+  adminAddAgreement,
   adminAddQuestion,
   adminAddJumbleWord,
   adminAddBackgroundImages,
   adminAddTime,
+  adminUpdateAgreement,
   adminUpdateTime,
   adminAddValues,
   adminAddModalConfig,
@@ -176,4 +199,5 @@ export {
   deleteUserById,
   deleteQuestionById,
   deleteWordById,
+  deleteAgreementById,
 }

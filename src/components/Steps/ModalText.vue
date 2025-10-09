@@ -1,5 +1,6 @@
+```vue
 <script setup>
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive, computed, watch } from 'vue'
 import Button from '../Button.vue'
 import Textarea from '../Textarea.vue'
 import { VIcon } from 'vuetify/components'
@@ -27,24 +28,38 @@ const props = defineProps({
     default: 'modal',
   },
 })
+const emit = defineEmits(['next-step', 'update-default-texts', 'step-complete'])
 
-const emit = defineEmits(['next-step'])
+const localTexts = reactive(JSON.parse(JSON.stringify(props.defaultModalTexts)))
+
+watch(
+  () => props.defaultModalTexts,
+  (newVal) => Object.assign(localTexts, JSON.parse(JSON.stringify(newVal))),
+  { deep: true },
+)
+
+watch(
+  () => localTexts,
+  (newVal) => {
+    emit('update-default-texts', { ...newVal })
+  },
+  { deep: true },
+)
 
 const editableFields = reactive({})
-props.modalConfig.forEach((item) => {
-  editableFields[item.key] = false
-})
+props.modalConfig.forEach((item) => (editableFields[item.key] = false))
 
-const toggleEdit = (key) => {
-  editableFields[key] = !editableFields[key]
-}
+const toggleEdit = (key) => (editableFields[key] = !editableFields[key])
 
 const updateModal = async (single) => {
   const formData = new FormData()
-  const value = props.defaultModalTexts[single?.key]
+  const value = localTexts[single?.key]
   formData.append(single?.key, value)
 
-  const response = await props.update({ id: props.defaultModalTexts?._id, body: formData })
+  const response = await props.update({
+    id: props.defaultModalTexts?._id,
+    body: formData,
+  })
 
   if (response?.error) {
     toast.error(response?.error?.message || 'Failed To Update')
@@ -56,16 +71,17 @@ const updateModal = async (single) => {
 }
 
 const isAllFieldsFilled = computed(() => {
-  const allFilled = props.modalConfig.every((item) => {
-    const value = props.defaultModalTexts[item.key]
-    return value !== '' && value !== null && value !== undefined
-  })
-
-  const anyEditing = Object.values(editableFields).some((isEditing) => isEditing)
+  const allFilled = props.modalConfig.every(
+    (item) => localTexts[item.key] !== '' && localTexts[item.key] != null,
+  )
+  const anyEditing = Object.values(editableFields).some(Boolean)
   return allFilled && !anyEditing
 })
 
 const stepChange = () => {
+  emit('update-default-texts', { ...localTexts })
+  emit('step-complete', 'modal', isAllFieldsFilled.value)
+
   const steps = ['modal', 'audio', 'blur']
   const currentIndex = steps.indexOf(props.nextStep)
   const next = steps[currentIndex + 1] || 'modal'
@@ -82,18 +98,25 @@ const stepChange = () => {
             <h4 class="card-box-title">{{ single?.heading }}</h4>
           </div>
 
-          <v-icon color="grey" class="upload-icon" @click="toggleEdit(single.key)">
-            {{ editableFields[single.key] ? 'mdi-check' : 'mdi-pencil' }}
+          <v-icon
+            v-if="props.defaultModalTexts._id ? !editableFields[single.key] : false"
+            color="grey"
+            class="upload-icon"
+            @click="toggleEdit(single.key)"
+          >
+            {{
+              props.defaultModalTexts._id && editableFields[single.key] ? 'mdi-check' : 'mdi-pencil'
+            }}
           </v-icon>
         </div>
 
         <div class="textarea-group">
           <Textarea
-            v-model="props.defaultModalTexts[single.key]"
+            v-model="localTexts[single.key]"
             :label="single.heading"
             rows="2"
-            placeholder="Enter description..."
-            :readonly="!editableFields[single.key]"
+            placeholder="Enter Text..."
+            :readonly="props.defaultModalTexts._id ? !editableFields[single.key] : false"
           />
         </div>
 
@@ -182,3 +205,4 @@ const stepChange = () => {
   margin-top: 20px;
 }
 </style>
+```

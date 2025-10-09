@@ -62,10 +62,19 @@ watchEffect(() => {
 })
 
 const stepSave = ref('modal')
+const stepCompletion = reactive({
+  modal: false,
+  audio: false,
+  blur: false,
+})
+
 const selectStepHandler = (type) => {
-  console.log(type, 'type')
   stepSave.value = type
 }
+
+watch(defaultModalTexts, (val) => {
+  console.log(val, 'parent')
+})
 </script>
 
 <template>
@@ -75,71 +84,83 @@ const selectStepHandler = (type) => {
       <Navigator />
     </div>
 
-    <Loader v-if="isGettingModalText || isUpdatingModal" />
-
+    <Loader v-if="isGettingModalText || isUpdatingModal || isAddingModal" />
     <main class="main-tab">
       <Button
         @click="selectStepHandler('modal')"
+        button-text="Step : 01 Add Modal Text"
+        :disabled="false"
         :style="{
           backgroundColor: stepSave === 'modal' ? '#ff4d4f' : 'transparent',
           borderColor: stepSave === 'modal' ? '#ff4d4f' : 'white',
         }"
-        button-text="Step : 01 Add Modal Text"
       />
 
       <Button
         @click="selectStepHandler('audio')"
+        button-text="Step : 02 Add Audio & Volume"
+        :disabled="!stepCompletion.modal"
         :style="{
           backgroundColor: stepSave === 'audio' ? '#ff4d4f' : 'transparent',
           borderColor: stepSave === 'audio' ? '#ff4d4f' : 'white',
+          opacity: !stepCompletion.modal ? 0.4 : 1,
         }"
-        button-text="Step : 02 Add Audio & Volume"
       />
 
       <Button
         @click="selectStepHandler('blur')"
+        button-text="Step : 03 Add Blur/Opacity"
+        :disabled="!stepCompletion.audio"
         :style="{
           backgroundColor: stepSave === 'blur' ? '#ff4d4f' : 'transparent',
           borderColor: stepSave === 'blur' ? '#ff4d4f' : 'white',
+          opacity: !stepCompletion.audio ? 0.4 : 1,
         }"
-        button-text="Step : 03 Add BLur/Opacity"
       />
     </main>
 
-    <ModalText
-      :modal-config="modalConfig"
-      :default-modal-texts="defaultModalTexts"
-      v-if="stepSave === 'modal'"
-      :update="updateModalTextAudio"
-      :refetch="refetchAllModal"
-      :nextStep="stepSave"
-      @next-step="selectStepHandler"
-    />
+    <transition name="fade-slide" mode="in-out">
+      <ModalText
+        v-if="stepSave === 'modal'"
+        :modal-config="modalConfig"
+        :default-modal-texts="defaultModalTexts"
+        :update="updateModalTextAudio"
+        :refetch="refetchAllModal"
+        :nextStep="stepSave"
+        @next-step="selectStepHandler"
+        @update-default-texts="(val) => Object.assign(defaultModalTexts, val)"
+        @step-complete="(step, status) => (stepCompletion[step] = status)"
+      />
+    </transition>
 
-    <AudioAndVolume
-      :modal-config="audioFile"
-      :default-modal-texts="defaultModalTexts"
-      :audioFile="defaultModalTexts.audioFile"
-      v-if="stepSave === 'audio'"
-      :update="updateModalTextAudio"
-      :refetch="refetchAllModal"
-      :nextStep="stepSave"
-      @next-step="selectStepHandler"
-    />
+    <transition name="fade-slide" mode="in-out">
+      <AudioAndVolume
+        v-if="stepSave === 'audio'"
+        :modal-config="audioFile"
+        :default-modal-texts="defaultModalTexts"
+        :audioFile="defaultModalTexts.audioFile"
+        :update="updateModalTextAudio"
+        :refetch="refetchAllModal"
+        :nextStep="stepSave"
+        @next-step="selectStepHandler"
+        @update-default-texts="(val) => Object.assign(defaultModalTexts, val)"
+        @step-complete="(step, status) => (stepCompletion[step] = status)"
+      />
+    </transition>
 
-    <Blur
-      :modal-config="blurConfig"
-      :default-modal-texts="defaultModalTexts"
-      v-if="stepSave === 'blur'"
-      :update="updateModalTextAudio"
-      :refetch="refetchAllModal"
-      :nextStep="stepSave"
-      @next-step="selectStepHandler"
-    />
-
-    <!-- <div class="save-all-btn">
-      <Button button-text="Save All" disabled />
-    </div> -->
+    <transition name="fade-slide" mode="in-out">
+      <Blur
+        v-if="stepSave === 'blur'"
+        :modal-config="blurConfig"
+        :default-modal-texts="defaultModalTexts"
+        :update="updateModalTextAudio"
+        :add="addModalTextAudio"
+        :refetch="refetchAllModal"
+        :nextStep="stepSave"
+        @next-step="selectStepHandler"
+        @step-complete="(step, status) => (stepCompletion[step] = status)"
+      />
+    </transition>
   </section>
 </template>
 
@@ -197,5 +218,20 @@ const selectStepHandler = (type) => {
   font-size: 1.3rem !important;
   font-weight: 700 !important;
   letter-spacing: 0.4px !important;
+}
+
+.fade-slide-enter-active,
+.fade-slide-leave-active {
+  transition: all 400ms;
+}
+
+.fade-slide-enter-from {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.fade-slide-leave-to {
+  opacity: 0;
+  transform: translateY(-20px);
 }
 </style>

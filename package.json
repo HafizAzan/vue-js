@@ -24,6 +24,7 @@
     "@mdi/font": "^7.4.47",
     "@tanstack/vue-query": "^5.87.4",
     "axios": "^1.12.1",
+    "jodit": "^4.6.13",
     "pinia": "^3.0.3",
     "pinia-plugin-persistedstate": "^4.5.0",
     "vite-plugin-vuetify": "^2.1.2",

@@ -13,6 +13,7 @@ import { createPinia } from 'pinia'
 import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'
 import { Toaster } from 'vue-sonner'
 import 'vue-sonner/style.css'
+import 'jodit/es2021/jodit.min.css'
 
 const queryClient = new QueryClient({
   defaultOptions: {

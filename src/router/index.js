@@ -13,6 +13,7 @@ import AdminAddQuestion from '@/views/AdminViews/AdminAddQuestion.vue'
 import AdminJumbleWord from '@/views/AdminViews/AdminJumbleWord.vue'
 import AdminBackgroundImages from '@/views/AdminViews/AdminBackgroundImages.vue'
 import AdminUploadTextAndAudio from '@/views/AdminViews/AdminUploadTextAndAudio.vue'
+import AdminAgreement from '@/views/AdminViews/AdminAgreement.vue'
 
 export const ROUTES = {
   HOME: '/',
@@ -29,6 +30,7 @@ export const ROUTES = {
   ADMIN_ADD_JUMBLE_WORD: '/admin/add-jumble-words',
   ADMIN_ADD_BACKGROUND_IMG: '/admin/add-background-images',
   ADMIN_ADD_MODAL_AND_AUDIO: '/admin/upload-modal-text-with-upload-audio',
+  ADMIN_AGREEMENT: '/admin/agreement',
 }
 
 const routes = [
@@ -116,6 +118,12 @@ const routes = [
         component: AdminUploadTextAndAudio,
         meta: { requiresAuth: true, roles: ['admin'] },
       },
+      {
+        path: ROUTES.ADMIN_AGREEMENT,
+        name: 'adminAgreement',
+        component: AdminAgreement,
+        meta: { requiresAuth: true, roles: ['admin'] },
+      },
     ],
   },
 ]
@@ -165,7 +173,9 @@ router.beforeEach((to, from, next) => {
         'adminAddJumbleWord',
         'adminAddBgImg',
         'adminUploadTextAndAudio',
+        'adminAgreement',
       ]
+
       if (!allowedRoutes.includes(to.name)) {
         return next(ROUTES.USER_LIST)
       }

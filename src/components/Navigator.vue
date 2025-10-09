@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import logo from '@/assets/logo.svg'
 import { ROUTES } from '@/router'
+import Tooltip from './Tooltip.vue'
 
 const drawer = ref(false)
 const router = useRouter()
@@ -43,6 +44,11 @@ const navigationItem = [
     title: 'Admin Text And Audio',
     route: ROUTES.ADMIN_ADD_MODAL_AND_AUDIO,
   },
+  {
+    icon: 'mdi-note-text-outline',
+    title: 'Admin Agreement',
+    route: ROUTES.ADMIN_AGREEMENT,
+  },
 ]
 
 const navigateTo = (path) => {
@@ -54,7 +60,9 @@ const navigateTo = (path) => {
 <template>
   <v-layout>
     <div class="icon" @click="toggleDrawer">
-      <v-icon>mdi-menu</v-icon>
+      <Tooltip text="Menu">
+        <v-icon>mdi-menu</v-icon>
+      </Tooltip>
     </div>
 
     <v-navigation-drawer v-model="drawer" class="navigator" theme="dark" temporary width="300">

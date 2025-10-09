@@ -1,5 +1,5 @@
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, watch, computed } from 'vue'
 import Button from '../Button.vue'
 import { toast } from 'vue-sonner'
 
@@ -26,13 +26,15 @@ const props = defineProps({
   },
   nextStep: {
     type: String,
-    default: 'modal',
+    default: 'audio',
   },
 })
 
+const emit = defineEmits(['next-step', 'update-default-texts', 'step-complete'])
+
 const editableFields = reactive({})
 props.modalConfig.forEach((item) => {
-  editableFields[item.key] = false
+  editableFields[item.key] = props.defaultModalTexts?._id ? false : true
 })
 
 const toggleEdit = (key) => {
@@ -71,20 +73,30 @@ const handleAudioChange = async (e) => {
   const file = e.target.files[0]
   if (!file) return
 
-  const formData = new FormData()
-  formData.append('audioFile', file)
+  if (props.defaultModalTexts?._id) {
+    const formData = new FormData()
+    formData.append('audioFile', file)
 
-  const response = await props.update({
-    id: props.defaultModalTexts._id,
-    body: formData,
-  })
+    const response = await props.update({
+      id: props.defaultModalTexts._id,
+      body: formData,
+    })
 
-  if (response?.error) {
-    toast.error(response?.error?.message || 'Audio upload failed!')
+    if (response?.error) {
+      toast.error(response?.error?.message || 'Audio upload failed!')
+    } else {
+      toast.success(response?.message || 'Audio uploaded successfully!')
+      selectedAudio.value = URL.createObjectURL(file)
+      await props.refetch()
+    }
   } else {
-    toast.success(response?.message || 'Audio uploaded successfully!')
-    selectedAudio.value = URL.createObjectURL(file)
-    await props.refetch()
+    const previewUrl = URL.createObjectURL(file)
+    selectedAudio.value = previewUrl
+
+    emit('update-default-texts', {
+      ...props.defaultModalTexts,
+      audioFile: file || previewUrl,
+    })
   }
 }
 
@@ -111,6 +123,35 @@ const togglePlay = (key) => {
     isPlaying[key] = false
   }
 }
+
+watch(
+  () => props.defaultModalTexts,
+  (newVal) => {
+    emit('update-default-texts', { ...newVal })
+  },
+  { deep: true },
+)
+
+const isAllFilled = computed(() => {
+  const slidersFilled = props.modalConfig.every((opt) => {
+    const val = props.defaultModalTexts[opt.key]
+    return val !== null && val !== undefined && val !== '' && val !== 0
+  })
+
+  const audioFilled =
+    selectedAudio.value &&
+    selectedAudio.value !== '' &&
+    selectedAudio.value !== null &&
+    selectedAudio.value !== undefined
+
+  return slidersFilled && audioFilled
+})
+
+const stepChange = () => {
+  emit('update-default-texts', { ...props.defaultModalTexts })
+  emit('next-step', 'blur')
+  emit('step-complete', 'audio', isAllFilled.value)
+}
 </script>
 
 <template>
@@ -135,21 +176,21 @@ const togglePlay = (key) => {
 
             <v-slider
               v-model="props.defaultModalTexts[opt.key]"
+              :readonly="!editableFields[opt.key]"
               color="blue-lighten-2"
               track-color="#444"
               thumb-color="white"
               min="0"
               max="1"
               step="0.01"
-              thumb-label="always"
-              :readonly="!editableFields[opt.key]"
+              thumb-label
             >
               <template #thumb-label="{ modelValue }">
-                {{ Math.round(modelValue * 100) }}%
+                {{ Math.round(modelValue * 100) || 0 }}%
               </template>
             </v-slider>
 
-            <div class="update-btn" v-if="editableFields[opt.key]">
+            <div class="update-btn" v-if="editableFields[opt.key] && props.defaultModalTexts._id">
               <Button button-text="Update" @click="updateSlider(opt)" />
             </div>
           </div>
@@ -167,7 +208,6 @@ const togglePlay = (key) => {
 
           <div v-else class="no-audio" @click="handleAudioUploadClick">
             <v-icon size="100">mdi-file-upload</v-icon>
-            <p>Upload Audio</p>
           </div>
 
           <input
@@ -181,7 +221,7 @@ const togglePlay = (key) => {
       </div>
 
       <div class="next-btn">
-        <Button button-text="Next" @click="$emit('next-step', 'blur')" />
+        <Button button-text="Next" @click="stepChange" :disabled="!isAllFilled" />
       </div>
     </div>
   </section>
@@ -299,5 +339,9 @@ const togglePlay = (key) => {
   display: inline-flex;
   align-items: center;
   gap: 10px;
+}
+
+.no-audio .v-icon {
+  cursor: pointer;
 }
 </style>

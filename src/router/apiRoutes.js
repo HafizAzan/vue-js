@@ -54,5 +54,10 @@ export const API_ROUTES = {
     POST_MODAL: `/api/admin/models`,
     PATCH_MODAL: `/api/admin/models/:id`,
     DELETE_MODAL: `/api/admin/models/:id`,
+
+    POST_AGREEMENT: '/api/admin/agreement',
+    GET_AGREEMENT: '/api/admin/agreement',
+    PATCH_AGREEMENT: '/api/admin/agreement/:id',
+    DELETE_AGREEMENT: '/api/admin/agreement/:id',
   },
 }

@@ -10,6 +10,7 @@ const routeTitleMap = {
   [ROUTES.ADMIN_ADD_QUESTION]: 'Add Question',
   [ROUTES.ADMIN_ADD_JUMBLE_WORD]: 'Add Jumble Words',
   [ROUTES.ADMIN_ADD_BACKGROUND_IMG]: 'Add Background Images',
+  [ROUTES.ADMIN_AGREEMENT]: 'Add Agreement',
 }
 
 function getRouteTitle(path) {

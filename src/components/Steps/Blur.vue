@@ -1,6 +1,6 @@
+```vue
 <script setup>
-import { ref } from 'vue'
-import { VSlider, VBtn } from 'vuetify/components'
+import { ref, reactive, watch, computed } from 'vue'
 import Button from '../Button.vue'
 import { toast } from 'vue-sonner'
 
@@ -17,6 +17,10 @@ const props = defineProps({
     type: Function,
     default: () => {},
   },
+  add: {
+    type: Function,
+    default: () => {},
+  },
   refetch: {
     type: Function,
     default: () => {},
@@ -27,9 +31,16 @@ const props = defineProps({
   },
 })
 
+const emit = defineEmits(['update-default-texts', 'next-step'])
+
 const appliedBlur = ref(0)
 const activeKey = ref(null)
 const editingKey = ref(null)
+
+const editableFields = reactive({})
+props.modalConfig.forEach((item) => {
+  editableFields[item.key] = props.defaultModalTexts?._id ? false : true
+})
 
 const toggleBlur = (key) => {
   if (activeKey.value === key) {
@@ -42,11 +53,8 @@ const toggleBlur = (key) => {
 }
 
 const toggleEdit = (key) => {
-  if (editingKey.value === key) {
-    editingKey.value = null
-  } else {
-    editingKey.value = key
-  }
+  editableFields[key] = !editableFields[key]
+  editingKey.value = editableFields[key] ? key : null
 }
 
 const handleUpdate = async (key) => {
@@ -59,13 +67,52 @@ const handleUpdate = async (key) => {
   })
 
   if (response?.error) {
-    toast.error(response?.error?.message || 'Audio upload failed!')
+    toast.error(response?.error?.message || 'Update failed!')
   } else {
-    toast.success(response?.message || 'Audio uploaded successfully!')
+    toast.success(response?.message || 'Updated successfully!')
+    editableFields[key] = false
     editingKey.value = null
     await props.refetch()
   }
 }
+
+watch(
+  () => props.defaultModalTexts,
+  (newVal) => {
+    emit('update-default-texts', { ...newVal })
+  },
+  { deep: true },
+)
+
+const stepChange = async () => {
+  emit('update-default-texts', { ...props.defaultModalTexts })
+  const formData = new FormData()
+  Object.keys(props.defaultModalTexts).forEach((key) => {
+    formData.append(key, props.defaultModalTexts[key])
+  })
+
+  const response = await props.add(formData)
+  if (response?.error) {
+    toast.error(response?.error?.message || 'Please Try Again Later Failed To Submit!')
+  } else {
+    toast.success(
+      response?.data?.message || 'Modal Text And Audio/Volume And Blur Successfully Added!',
+    )
+    await props.refetch()
+    setTimeout(() => {
+      emit('next-step', 'modal')
+    }, 2000)
+  }
+}
+
+const isAllFilled = computed(() => {
+  const slidersFilled = props.modalConfig.every((opt) => {
+    const val = props.defaultModalTexts[opt.key]
+    return val !== null && val !== undefined && val !== '' && val !== 0
+  })
+
+  return slidersFilled
+})
 </script>
 
 <template>
@@ -83,26 +130,28 @@ const handleUpdate = async (key) => {
                 </v-icon>
 
                 <v-icon color="grey" size="18" class="edit-icon" @click="toggleEdit(opt.key)">
-                  {{ editingKey === opt.key ? 'mdi-close' : 'mdi-pencil' }}
+                  {{ editableFields[opt.key] ? 'mdi-check' : 'mdi-pencil' }}
                 </v-icon>
               </div>
             </div>
 
             <v-slider
               v-model="props.defaultModalTexts[opt.key]"
-              :readonly="editingKey !== opt.key"
+              :readonly="!editableFields[opt.key]"
               color="blue-lighten-2"
               track-color="#444"
               thumb-color="white"
               min="0"
-              max="20"
+              max="10"
               step="0.1"
-              thumb-label="always"
+              thumb-label
             >
-              <template #thumb-label="{ modelValue }"> {{ Math.round(modelValue * 5) }}% </template>
+              <template #thumb-label="{ modelValue }">
+                {{ Math.round(modelValue * 10) || 0 }}%
+              </template>
             </v-slider>
 
-            <div class="update-btn" v-if="editingKey === opt.key">
+            <div class="update-btn" v-if="editableFields[opt.key] && props.defaultModalTexts._id">
               <Button button-text="Update" @click="handleUpdate(opt.key)" />
             </div>
           </div>
@@ -112,6 +161,10 @@ const handleUpdate = async (key) => {
           <label>Hidden Word</label>
           <p class="hidden-word" :style="{ filter: `blur(${appliedBlur}px)` }">Hello World!</p>
         </div>
+      </div>
+
+      <div class="next-btn" v-if="!props.defaultModalTexts._id">
+        <Button button-text="Submit" @click="stepChange" :disabled="!isAllFilled" />
       </div>
     </div>
   </section>
@@ -164,8 +217,6 @@ const handleUpdate = async (key) => {
 .slider-group label {
   font-size: 0.9rem;
   color: #aaa;
-  margin-bottom: 4px;
-  display: block;
 }
 
 .audio-section {
@@ -194,15 +245,17 @@ const handleUpdate = async (key) => {
   cursor: pointer;
 }
 
-.v-btn.mt-2 {
-  margin-top: 8px;
-  font-size: 0.75rem;
-  text-transform: none;
-}
-
 .update-btn {
   display: flex;
   justify-content: flex-end;
   margin-top: 10px;
 }
+
+.next-btn {
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+  margin-top: 20px;
+}
 </style>
+```
