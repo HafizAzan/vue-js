@@ -6,6 +6,7 @@ import AudioAndVolume from '@/components/Steps/AudioAndVolume.vue'
 import Blur from '@/components/Steps/Blur.vue'
 import ModalText from '@/components/Steps/ModalText.vue'
 import Textarea from '@/components/Textarea.vue'
+import Tooltip from '@/components/Tooltip.vue'
 import {
   adminAddModalConfig,
   adminUpdateModalConfig,
@@ -71,10 +72,6 @@ const stepCompletion = reactive({
 const selectStepHandler = (type) => {
   stepSave.value = type
 }
-
-watch(defaultModalTexts, (val) => {
-  console.log(val, 'parent')
-})
 </script>
 
 <template>
@@ -89,36 +86,55 @@ watch(defaultModalTexts, (val) => {
     <Loader v-if="isGettingModalText || isUpdatingModal || isAddingModal" />
     <main class="main-tab">
       <Button
+        class="main-tab-button"
         @click="selectStepHandler('modal')"
-        button-text="Step : 01 Add Modal Text"
+        tooltip="Step 01"
         :disabled="false"
         :style="{
           backgroundColor: stepSave === 'modal' ? '#ff4d4f' : 'transparent',
           borderColor: stepSave === 'modal' ? '#ff4d4f' : 'white',
         }"
-      />
+      >
+        <template #buttonText>
+          <Tooltip text="Step 01">
+            <span>Step 01 Add Modal Text </span>
+          </Tooltip>
+        </template>
+      </Button>
 
       <Button
+        class="main-tab-button"
         @click="selectStepHandler('audio')"
-        button-text="Step : 02 Add Audio & Volume"
+        tooltip="Step 02"
         :disabled="!stepCompletion.modal"
         :style="{
           backgroundColor: stepSave === 'audio' ? '#ff4d4f' : 'transparent',
           borderColor: stepSave === 'audio' ? '#ff4d4f' : 'white',
-          opacity: !stepCompletion.modal ? 0.4 : 1,
         }"
-      />
+      >
+        <template #buttonText>
+          <Tooltip text="Step 02">
+            <span> Step : 02 Add Audio & Volume </span>
+          </Tooltip>
+        </template>
+      </Button>
 
       <Button
+        class="main-tab-button"
         @click="selectStepHandler('blur')"
-        button-text="Step : 03 Add Blur/Opacity"
+        tooltip="Step 02"
         :disabled="!stepCompletion.audio"
         :style="{
           backgroundColor: stepSave === 'blur' ? '#ff4d4f' : 'transparent',
           borderColor: stepSave === 'blur' ? '#ff4d4f' : 'white',
-          opacity: !stepCompletion.audio ? 0.4 : 1,
         }"
-      />
+      >
+        <template #buttonText>
+          <Tooltip text="Step 03">
+            <span> Step : 03 Add Blur/Opacity </span>
+          </Tooltip>
+        </template>
+      </Button>
     </main>
 
     <transition name="fade-slide" mode="in-out">
@@ -209,19 +225,18 @@ watch(defaultModalTexts, (val) => {
   align-items: center;
   justify-content: space-between;
   border-radius: 10px;
-  gap: 5px;
   flex-wrap: wrap;
 }
 
-.main-tab button {
+.main-tab-button {
   flex: 1 1 auto;
   height: 98% !important;
   border-radius: 0px !important;
   min-height: 98%;
   border: 1px solid white;
-  font-size: 1.3rem !important;
-  font-weight: 700 !important;
-  letter-spacing: 0.4px !important;
+  font-size: 1.3rem;
+  font-weight: 700;
+  letter-spacing: 0.4px;
 }
 
 .fade-slide-enter-active,
@@ -237,5 +252,11 @@ watch(defaultModalTexts, (val) => {
 .fade-slide-leave-to {
   opacity: 0;
   transform: translateY(-20px);
+}
+
+@media (max-width: 785px) {
+  .content {
+    flex-direction: column-reverse;
+  }
 }
 </style>

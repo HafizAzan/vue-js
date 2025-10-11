@@ -2,6 +2,7 @@
 import { ref, reactive, watch, computed } from 'vue'
 import Button from '../Button.vue'
 import { toast } from 'vue-sonner'
+import Tooltip from '../Tooltip.vue'
 
 const props = defineProps({
   modalConfig: {
@@ -164,13 +165,17 @@ const stepChange = () => {
               <label>{{ opt.heading }}</label>
 
               <div class="icons-wrapper">
-                <v-icon color="grey" class="upload-icon" size="20" @click="togglePlay(opt.key)">
-                  {{ isPlaying[opt.key] ? 'mdi-pause' : 'mdi-play' }}
-                </v-icon>
+                <Tooltip :text="isPlaying[opt.key] ? 'Pause Audio' : 'Play Audio'">
+                  <v-icon color="grey" class="upload-icon" size="20" @click="togglePlay(opt.key)">
+                    {{ isPlaying[opt.key] ? 'mdi-pause' : 'mdi-play' }}
+                  </v-icon>
+                </Tooltip>
 
-                <v-icon color="grey" size="18" class="edit-icon" @click="toggleEdit(opt.key)">
-                  {{ editableFields[opt.key] ? 'mdi-check' : 'mdi-pencil' }}
-                </v-icon>
+                <Tooltip :text="editableFields[opt.key] ? 'Close Editable' : 'Editable'">
+                  <v-icon color="grey" size="18" class="edit-icon" @click="toggleEdit(opt.key)">
+                    {{ editableFields[opt.key] ? 'mdi-check' : 'mdi-pencil' }}
+                  </v-icon>
+                </Tooltip>
               </div>
             </div>
 
@@ -191,7 +196,9 @@ const stepChange = () => {
             </v-slider>
 
             <div class="update-btn" v-if="editableFields[opt.key] && props.defaultModalTexts._id">
-              <Button button-text="Update" @click="updateSlider(opt)" />
+              <Tooltip text="Update">
+                <Button button-text="Update" @click="updateSlider(opt)" />
+              </Tooltip>
             </div>
           </div>
         </div>
@@ -203,7 +210,13 @@ const stepChange = () => {
               mdi-pencil
             </v-icon>
 
-            <audio ref="audioPlayer" :src="selectedAudio" class="audio-player" controls></audio>
+            <audio
+              ref="audioPlayer"
+              :src="selectedAudio"
+              class="audio-player"
+              controls
+              controlsList="nodownload noplaybackrate noremoteplayback"
+            ></audio>
           </div>
 
           <div v-else class="no-audio" @click="handleAudioUploadClick">
@@ -221,7 +234,9 @@ const stepChange = () => {
       </div>
 
       <div class="next-btn">
-        <Button button-text="Next" @click="stepChange" :disabled="!isAllFilled" />
+        <Tooltip text="Next Step 03">
+          <Button button-text="Next" @click="stepChange" :disabled="!isAllFilled" />
+        </Tooltip>
       </div>
     </div>
   </section>
@@ -296,6 +311,7 @@ const stepChange = () => {
   align-items: flex-start;
   justify-content: center;
   position: relative;
+  padding-top: 15px;
 }
 
 .audio-section label {
@@ -313,7 +329,7 @@ const stepChange = () => {
 }
 
 .audio-player {
-  width: 95%;
+  width: 90%;
   outline: none;
   border-radius: 8px;
 }

@@ -75,7 +75,9 @@ const logout = () => {
 
     <v-navigation-drawer v-model="drawer" class="navigator" theme="dark" temporary width="300">
       <div class="logo">
-        <img :src="logo" alt="Logo" />
+        <router-link to="/">
+          <img :src="logo" alt="Logo" />
+        </router-link>
         <v-icon size="50" @click="drawer = false"> mdi-window-close</v-icon>
       </div>
 

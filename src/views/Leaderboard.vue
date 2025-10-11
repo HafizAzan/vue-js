@@ -20,7 +20,7 @@ import {
 import { headers } from '@/utils/constant'
 
 // default + library
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useQuery } from '@tanstack/vue-query'
 import { toast } from 'vue-sonner'
@@ -29,6 +29,8 @@ import { toast } from 'vue-sonner'
 import { useUserStore } from '../store/useUserStore'
 import { ROUTES } from '../router'
 import { usePlayStore } from '@/store/usePlayStore'
+import Tooltip from '@/components/Tooltip.vue'
+import { fetchAllModalConfig } from '@/utils/admin-api-service'
 
 const { resetToken, token } = useUserStore()
 const playStore = usePlayStore()
@@ -225,16 +227,19 @@ const ButtonText = () => {
       <v-typography variants="h3" class="text-h3 h3">Leaderboard</v-typography>
 
       <main class="content-btns">
-        <Button
-          :buttonText="ButtonText()"
-          @click="() => gamePlay('play-next')"
-          :disabled="playStore.getLevel() > 7"
-        />
+        <Tooltip text="Play Next">
+          <Button
+            :buttonText="ButtonText()"
+            @click="() => gamePlay('play-next')"
+            :disabled="playStore.getLevel() > 7"
+          />
+        </Tooltip>
 
         <DropDownVue
           v-if="playStore.getLevel() > 1"
           :items="playAgainLevels"
           buttonText="Play Again"
+          tooltipText="Play Again"
           defaultLocation="bottom"
           @select="handleSelectPlayAgainLevel"
         />
@@ -247,6 +252,7 @@ const ButtonText = () => {
           disagree-text="No"
           @agree="() => gamePlay('leave')"
           @disagree="console.log('Disagreed!')"
+          tooltip-text="leave"
           button-text="Leave"
           max-width="450"
         >
@@ -258,6 +264,7 @@ const ButtonText = () => {
 
         <DropDownVue
           :items="FilteredLevels"
+          tooltipText="Levels"
           :buttonText="dropdownLabel"
           defaultLocation="bottom"
           @select="handleSelect"

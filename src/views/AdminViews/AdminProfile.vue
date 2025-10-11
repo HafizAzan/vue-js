@@ -5,6 +5,7 @@ import Input from '@/components/Input.vue'
 import Loader from '@/components/Loader.vue'
 import Modal from '@/components/Modal.vue'
 import Navigator from '@/components/Navigator.vue'
+import Tooltip from '@/components/Tooltip.vue'
 import { ROUTES } from '@/router'
 import { useUserStore } from '@/store/useUserStore'
 import { fetchAdminProfile, updateAdminProfile } from '@/utils/admin-api-service'
@@ -129,7 +130,9 @@ const handlePasswordSubmit = async () => {
       <div class="card">
         <div class="card-header">
           <h4>Admin Overview</h4>
-          <v-icon @click="editModal('all')">mdi-pencil</v-icon>
+          <Tooltip text="Edit Info">
+            <v-icon @click="editModal('all')">mdi-pencil</v-icon>
+          </Tooltip>
         </div>
 
         <div class="card-info">
@@ -154,7 +157,9 @@ const handlePasswordSubmit = async () => {
         </div>
 
         <div class="card-btn">
-          <Button button-text="Update Password" @click="editModal('password')" />
+          <Tooltip text="Change Your Password">
+            <Button button-text="Update Password" @click="editModal('password')" />
+          </Tooltip>
         </div>
 
         <Modal
@@ -209,13 +214,15 @@ const handlePasswordSubmit = async () => {
               <Input v-model="form.r_password" label="Repeat Password" type="password" />
             </div>
 
-            <Button
-              type="submit"
-              buttonText="Submit"
-              appendIcon="mdi-arrow-right"
-              :is-loading="isUpdatingAdminProfile"
-              :disabled="isUpdatingAdminProfile"
-            />
+            <Tooltip text="Update Password">
+              <Button
+                type="submit"
+                buttonText="Update"
+                appendIcon="mdi-arrow-right"
+                :is-loading="isUpdatingAdminProfile"
+                :disabled="isUpdatingAdminProfile"
+              />
+            </Tooltip>
           </v-form>
         </Modal>
       </div>
@@ -275,6 +282,27 @@ const handlePasswordSubmit = async () => {
   letter-spacing: 0.8px;
 }
 
+@media (max-width: 500px) {
+  .card-header h4 {
+    font-size: 20px;
+    font-weight: 500;
+  }
+
+  .card-header i {
+    font-size: 20px;
+  }
+
+  .card-info strong {
+    font-size: 16px !important;
+    font-weight: 500;
+  }
+
+  .card-info span {
+    font-size: 16px !important;
+    font-weight: 500;
+  }
+}
+
 .card-header i {
   font-size: 28px;
   color: white;
@@ -319,6 +347,13 @@ const handlePasswordSubmit = async () => {
 .form-title {
   font-size: 2.4rem;
   padding-top: 20px;
+}
+
+@media (max-width: 500px) {
+  .form-title {
+    font-size: 1.5rem;
+    padding-top: 20px;
+  }
 }
 
 .main-input {

@@ -4,6 +4,7 @@ import click from '@/assets/music/click.mp3'
 
 const emit = defineEmits(['click'])
 const attr = useAttrs()
+
 const props = defineProps({
   variant: {
     type: String,
@@ -12,6 +13,10 @@ const props = defineProps({
   buttonText: {
     type: String,
     default: 'Play Again',
+  },
+  tooltip: {
+    type: String,
+    default: null,
   },
   customClass: {
     type: String,
@@ -48,7 +53,9 @@ function handleClick(event) {
     @click="handleClick"
   >
     <v-icon v-if="prependIcon && !isLoading" class="mr-2">{{ prependIcon }}</v-icon>
-    <slot>{{ buttonText }}</slot>
+    <slot name="buttonText">
+      {{ buttonText }}
+    </slot>
     <v-progress-circular v-if="isLoading" indeterminate size="20" color="white" class="ml-2" />
     <v-icon v-if="appendIcon && !isLoading" class="ml-2">{{ appendIcon }}</v-icon>
   </v-btn>
@@ -70,5 +77,11 @@ function handleClick(event) {
   gap: 0.3rem;
   display: flex;
   align-items: center;
+}
+
+@media (max-width: 600px) {
+  .content-btn {
+    font-size: 0.8rem;
+  }
 }
 </style>

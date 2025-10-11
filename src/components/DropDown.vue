@@ -1,4 +1,5 @@
 <script setup>
+import { useSlots } from 'vue'
 import Button from './Button.vue'
 
 const props = defineProps({
@@ -36,17 +37,17 @@ const handleSelect = (item) => {
 </script>
 
 <template>
-  <div :class="prependIcon ? 'content-btn-none-wrapper' : ''">
+  <div :class="$slots.prependIcon ? 'content-btn-none-wrapper' : ''">
     <v-menu :location="defaultLocation">
       <template v-slot:activator="{ props: menuProps }">
         <Button
-          v-if="buttonText"
+          v-if="buttonText || $slots.prependIcon"
           :buttonText="buttonText"
-          :customClass="prependIcon ? 'content-btn-none' : 'customClass'"
+          :customClass="$slots.prependIcon ? 'content-btn-none' : customClass"
           v-bind="menuProps"
         >
-          <template v-if="prependIcon" #default>
-            <v-icon size="30">{{ prependIcon }}</v-icon>
+          <template v-if="$slots.prependIcon" #buttonText>
+            <slot name="prependIcon" />
           </template>
         </Button>
       </template>
@@ -97,7 +98,6 @@ const handleSelect = (item) => {
 .menu-list {
   background-color: rgb(248, 13, 13) !important;
   color: white !important;
-  height: 400px !important;
 }
 
 .one-row {
@@ -106,7 +106,7 @@ const handleSelect = (item) => {
   gap: 10px;
 }
 
-:deep(.v-menu > .v-overlay__content) {
+:deep(.v-overlay__content) {
   min-height: 500px !important;
   max-height: 500px !important;
 }

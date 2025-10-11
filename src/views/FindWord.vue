@@ -31,6 +31,7 @@ import Button from '@/components/Button.vue'
 import Modal from '@/components/Modal.vue'
 import { toast } from 'vue-sonner'
 import Animation from '@/components/Animation.vue'
+import { fetchAllModalConfig } from '@/utils/admin-api-service'
 
 const { token } = useUserStore()
 const playStore = usePlayStore()
@@ -110,6 +111,15 @@ const { mutateAsync: updateArray, isPending: isValuesPending } = useMutation({
   mutationFn: ({ body, itemId }) => updateValueItems({ userId: itemId, body }),
 })
 
+const {
+  data: getAllModal,
+  isLoading: isGettingModalText,
+  refetch: refetchAllModal,
+} = useQuery({
+  queryKey: ['get-all-models'],
+  queryFn: fetchAllModalConfig,
+})
+
 // computed
 const isPageLoading = computed(
   () =>
@@ -117,6 +127,7 @@ const isPageLoading = computed(
     isHiddenWordLoading.value ||
     isMcqLoading.value ||
     isAssigningSection.value ||
+    isGettingModalText.value ||
     !isSectionReady.value,
 )
 
@@ -199,6 +210,35 @@ const messageText = computed(() => {
   }
   return ''
 })
+
+const defaultModalTexts = reactive({
+  sessionText: '',
+  timeUpText: '',
+  allSessionFinishModalText: '',
+  gateCompleteModalText: '',
+  wrongCompleteModalText: '',
+  lastLevelModalText: '',
+  heading: '',
+  audioFile: '',
+  low: '',
+  medium: '',
+  high: '',
+  opacityLow: '',
+  opacityMedium: '',
+  opacityHigh: '',
+})
+
+const fetchModalData = () => {
+  const modalData = getAllModal.value?.[0]
+  if (modalData) {
+    Object.keys(defaultModalTexts).forEach((key) => {
+      defaultModalTexts[key] = modalData[key] ?? ''
+    })
+  }
+}
+
+watch(getAllModal, fetchModalData)
+onMounted(fetchModalData)
 
 // Watchers
 watch(
@@ -638,13 +678,28 @@ const level = playAgainLevel ?? playStore.getLevel()
           <p class="modal-main-title">Wow! That's Great</p>
         </template>
 
-        <p class="modal-main-text text-gray-700 text-center" v-if="expectedLastSession">
-          {{ messageText }}
-        </p>
+        <div
+          class="modal-main-text text-gray-700 text-center"
+          v-if="
+            expectedLastSession &&
+            defaultModalTexts?.allSessionFinishModalText &&
+            !defaultModalTexts?.sessionText
+          "
+        >
+          <p v-if="defaultModalTexts?.allSessionFinishModalText">
+            {{ defaultModalTexts?.allSessionFinishModalText }}
+          </p>
+          <p v-if="defaultModalTexts?.allSessionFinishModalText">
+            {{ messageText }}
+          </p>
+        </div>
 
-        <p class="modal-main-text text-gray-700 text-center" v-else>
-          Next Intension Session Start in {{ timerSessionSeconds }} sec
-        </p>
+        <div class="modal-main-text text-gray-700 text-center" v-else>
+          <p v-if="defaultModalTexts?.sessionText">{{ defaultModalTexts?.sessionText }}</p>
+          <div v-if="defaultModalTexts?.sessionText">{{ timerSessionSeconds }} Seconds</div>
+
+          <span v-else>Next Intension Session Start in {{ timerSessionSeconds }} sec</span>
+        </div>
       </Modal>
 
       <!-- level 7 completed (Game Finished) -->
@@ -664,7 +719,10 @@ const level = playAgainLevel ?? playStore.getLevel()
         </template>
 
         <p class="modal-main-text text-gray-700 text-center">
-          🎉 Congratulations! You’ve completed the game!
+          {{
+            defaultModalTexts?.gateCompleteModalText ??
+            '🎉 Congratulations! You’ve completed the game!'
+          }}
         </p>
 
         <div class="modal-footer-btn">
@@ -689,7 +747,9 @@ const level = playAgainLevel ?? playStore.getLevel()
           <p class="modal-main-title">That's Great</p>
         </template>
 
-        <p class="modal-main-text text-gray-700 text-center">Congratulations! Level completed.</p>
+        <p class="modal-main-text text-gray-700 text-center">
+          {{ defaultModalTexts?.lastLevelModalText ?? 'Congratulations! Level completed.' }}
+        </p>
 
         <div class="modal-footer-btn" v-if="!playAgainLevel">
           <Button buttonText="Play Again" @click="leaveHandle('playAgain')" />
@@ -719,7 +779,10 @@ const level = playAgainLevel ?? playStore.getLevel()
         </template>
 
         <p class="modal-main-text text-gray-700 text-center">
-          You didn’t respond or missed one or more secret words.
+          {{
+            defaultModalTexts?.wrongCompleteModalText ??
+            'You didn’t respond or missed one or more secret words.'
+          }}
         </p>
 
         <div class="modal-footer-btn">

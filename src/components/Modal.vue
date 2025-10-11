@@ -1,6 +1,7 @@
 <script setup>
 import { ref, watch } from 'vue'
 import Button from './Button.vue'
+import Tooltip from './Tooltip.vue'
 
 const emit = defineEmits(['close', 'agree', 'disagree', 'update:modelValue'])
 
@@ -10,6 +11,10 @@ const props = defineProps({
     default: false,
   },
   title: {
+    type: String,
+    default: null,
+  },
+  tooltipText: {
     type: String,
     default: null,
   },
@@ -77,7 +82,9 @@ const handleDisagree = () => {
   >
     <template v-slot:activator="{ props: activatorProps }">
       <slot name="activator" v-bind="{ activatorProps }">
-        <Button v-if="buttonText" :buttonText="buttonText" v-bind="activatorProps" />
+        <Tooltip :text="tooltipText">
+          <Button v-if="buttonText" :buttonText="buttonText" v-bind="activatorProps" />
+        </Tooltip>
       </slot>
     </template>
 
@@ -135,5 +142,11 @@ const handleDisagree = () => {
 
 :deep(.v-card-text) {
   width: 100%;
+}
+
+@media (max-width: 500px) {
+  :deep(.v-card-text) {
+    padding: 0px !important;
+  }
 }
 </style>

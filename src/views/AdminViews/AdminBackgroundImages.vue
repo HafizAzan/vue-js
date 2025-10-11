@@ -3,6 +3,7 @@ import BreadCrumb from '@/components/BreadCrumb.vue'
 import Button from '@/components/Button.vue'
 import Loader from '@/components/Loader.vue'
 import Navigator from '@/components/Navigator.vue'
+import Tooltip from '@/components/Tooltip.vue'
 import { ROUTES } from '@/router'
 import {
   adminAddBackgroundImages,
@@ -187,7 +188,9 @@ const handleUploadImages = async () => {
       >
         <div class="card-box-one-row">
           <h3 style="color: white">{{ key.toUpperCase() }}</h3>
-          <v-icon class="pencil-icon" @click="triggerUpload(key)">mdi-pencil</v-icon>
+          <Tooltip text="Edit Photo">
+            <v-icon class="pencil-icon" @click="triggerUpload(key)">mdi-pencil</v-icon>
+          </Tooltip>
         </div>
 
         <div class="upload-img" v-if="!value?.preview" @click="triggerUpload(key)">
@@ -202,12 +205,14 @@ const handleUploadImages = async () => {
       <input ref="fileInput" type="file" accept="image/*" hidden @change="handleImageChange" />
     </main>
 
-    <Button
-      button-text="Upload BackGround Images"
-      :disabled="isDisabled || isAddingImage"
-      :is-loading="isAddingImage"
-      @click="handleUploadImages"
-    />
+    <Tooltip :disabled="isDisabled" text="Upload All Images">
+      <Button
+        button-text="Upload BackGround Images"
+        :disabled="isDisabled || isAddingImage"
+        :is-loading="isAddingImage"
+        @click="handleUploadImages"
+      />
+    </Tooltip>
   </section>
 </template>
 
@@ -236,7 +241,7 @@ const handleUploadImages = async () => {
   background-color: #1e1e2f;
   height: 270px;
   border-radius: 10px;
-  flex: 0 1 auto;
+  flex: 1 1 auto;
   padding: 15px;
 }
 

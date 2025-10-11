@@ -2,7 +2,7 @@
 import { RouterView, useRoute } from 'vue-router'
 import Header from '@/components/Header.vue'
 import { ROUTES } from '@/router'
-import { computed, ref, watch, onMounted, onUnmounted, nextTick } from 'vue'
+import { computed, ref, watch, onMounted, onUnmounted, nextTick, reactive } from 'vue'
 import doorBg from '@/assets/images/gate.jpg'
 import leaderboardBg from '@/assets/images/leaderboard.jpg'
 import { usePlayStore } from '@/store/usePlayStore'
@@ -14,9 +14,20 @@ import findWordFive from '@/assets/images/level-05.jpg'
 import findWordSix from '@/assets/images/level-06.jpg'
 import findWordSeven from '@/assets/images/level-07.jpg'
 import music from '@/assets/music/music.mp3'
+import { fetchAllBgImg } from '@/utils/admin-api-service'
+import { useQuery } from '@tanstack/vue-query'
 
 const route = useRoute()
 const playStore = usePlayStore()
+
+const {
+  data: getAllImages,
+  isLoading: isGettingImages,
+  refetch: refetchAllImages,
+} = useQuery({
+  queryKey: ['fetch-bg-img'],
+  queryFn: fetchAllBgImg,
+})
 
 const levelBackgrounds = {
   1: findWordOne,
@@ -28,13 +39,38 @@ const levelBackgrounds = {
   7: findWordSeven,
 }
 
+const defaultImages = reactive({
+  home: '',
+  register: '',
+  login: '',
+  answers: '',
+  leaderboard: '',
+  door: '',
+})
+
+const getBgImages = () => {
+  const bgImages = getAllImages?.value?.[0]
+  if (bgImages) {
+    Object.entries(defaultImages).forEach(([key, value]) => {
+      defaultImages[key] = bgImages[key]
+    })
+  }
+}
+
+watch(getAllImages, getBgImages)
+onMounted(getBgImages)
+
 const layoutStyle = computed(() => {
   const level = playStore.getLevel()
   const levelBg = levelBackgrounds[level] || findWordOne
 
-  let bgImage = leaderboardBg
-  if (route.path === ROUTES.DOOR) bgImage = doorBg
+  let bgImage = defaultImages?.leaderboard || leaderboardBg
+  if (route.path === ROUTES.DOOR) bgImage = defaultImages.door || doorBg
   else if (route.path === ROUTES.FIND_WORD) bgImage = levelBg
+  else if (route.path === ROUTES.HOME) bgImage = defaultImages?.home || levelBg
+  else if (route.path === ROUTES.REGISTER) bgImage = defaultImages?.register || levelBg
+  else if (route.path === ROUTES.ANSWERS) bgImage = defaultImages?.answers || levelBg
+  else if (route.path === ROUTES.LOGIN) bgImage = defaultImages?.login || levelBg
 
   return {
     backgroundImage: `url(${bgImage})`,

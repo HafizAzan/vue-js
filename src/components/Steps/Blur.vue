@@ -1,8 +1,8 @@
-```vue
 <script setup>
 import { ref, reactive, watch, computed } from 'vue'
 import Button from '../Button.vue'
 import { toast } from 'vue-sonner'
+import Tooltip from '../Tooltip.vue'
 
 const props = defineProps({
   modalConfig: {
@@ -125,13 +125,17 @@ const isAllFilled = computed(() => {
               <label>{{ opt.heading }}</label>
 
               <div class="icons-wrapper">
-                <v-icon color="grey" size="20" class="edit-icon" @click="toggleBlur(opt.key)">
-                  {{ activeKey === opt.key ? 'mdi-close-box' : 'mdi-plus-box' }}
-                </v-icon>
+                <Tooltip :text="activeKey === opt.key ? 'Close Blur' : 'Add Blur'">
+                  <v-icon color="grey" size="20" class="edit-icon" @click="toggleBlur(opt.key)">
+                    {{ activeKey === opt.key ? 'mdi-close-box' : 'mdi-plus-box' }}
+                  </v-icon>
+                </Tooltip>
 
-                <v-icon color="grey" size="18" class="edit-icon" @click="toggleEdit(opt.key)">
-                  {{ editableFields[opt.key] ? 'mdi-check' : 'mdi-pencil' }}
-                </v-icon>
+                <Tooltip :text="editableFields[opt.key] ? 'Close Editable' : 'Editable'">
+                  <v-icon color="grey" size="18" class="edit-icon" @click="toggleEdit(opt.key)">
+                    {{ editableFields[opt.key] ? 'mdi-check' : 'mdi-pencil' }}
+                  </v-icon>
+                </Tooltip>
               </div>
             </div>
 
@@ -152,7 +156,9 @@ const isAllFilled = computed(() => {
             </v-slider>
 
             <div class="update-btn" v-if="editableFields[opt.key] && props.defaultModalTexts._id">
-              <Button button-text="Update" @click="handleUpdate(opt.key)" />
+              <Tooltip :text="editableFields[opt.key] && props.defaultModalTexts._id && 'Update'">
+                <Button button-text="Update" @click="handleUpdate(opt.key)" />
+              </Tooltip>
             </div>
           </div>
         </div>
@@ -164,7 +170,9 @@ const isAllFilled = computed(() => {
       </div>
 
       <div class="next-btn" v-if="!props.defaultModalTexts._id">
-        <Button button-text="Submit" @click="stepChange" :disabled="!isAllFilled" />
+        <Tooltip :text="!props.defaultModalTexts._id && 'Submit Form'">
+          <Button button-text="Submit" @click="stepChange" :disabled="!isAllFilled" />
+        </Tooltip>
       </div>
     </div>
   </section>
@@ -228,6 +236,7 @@ const isAllFilled = computed(() => {
   flex-direction: column;
   align-items: flex-start;
   justify-content: center;
+  padding-top: 15px;
 }
 
 .audio-section label {
@@ -261,4 +270,3 @@ const isAllFilled = computed(() => {
   margin-top: 20px;
 }
 </style>
-```

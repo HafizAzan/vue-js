@@ -380,7 +380,7 @@ const selectSectionHandler = async (item, userId) => {
 <template>
   <main class="container">
     <div class="content">
-      <v-typography variants="h3" class="text-sm-h3 text-h4 h3">User List</v-typography>
+      <v-typography variants="h3" class="text-h3 heading-title h3">User List</v-typography>
 
       <div class="nav-icon">
         <UploadCSV :refetch="refetcAllValues" />
@@ -415,6 +415,12 @@ const selectSectionHandler = async (item, userId) => {
 
     <div v-else class="main-content-table">
       <Table :headers="userListHeaders" :items="users">
+        <template #item.userName="{ item }">
+          <div class="ellipsis">
+            <span>{{ item?.userName }}</span>
+          </div>
+        </template>
+
         <template #item.createdAt="{ item }">
           <div class="ellipsis">
             <span>{{ formatDateTimeUTC(item?.createdAt) }}</span>
@@ -428,15 +434,30 @@ const selectSectionHandler = async (item, userId) => {
               :selected="item.section"
               :items="arrayAssign(item)"
               defaultLocation="bottom"
-              :prepend-icon="'mdi-account-group'"
-              button-text="H"
               @select="(val) => selectSectionHandler(val, item?._id)"
-            />
+            >
+              <template #prependIcon>
+                <Tooltip text="Assign Array">
+                  <v-icon>mdi-account-group</v-icon>
+                </Tooltip>
+              </template>
+            </DropDownVue>
 
-            <v-icon @click="navigateUserDetail(item)">mdi-eye</v-icon>
-            <v-icon @click="editModal(item?._id)">mdi-pencil</v-icon>
-            <v-icon @click="openModal(item?._id)">mdi-trash-can-outline</v-icon>
-            <v-icon @click="downloadPDF(item?._id)">mdi-download</v-icon>
+            <Tooltip text="View Details">
+              <v-icon @click="navigateUserDetail(item)">mdi-eye</v-icon>
+            </Tooltip>
+
+            <Tooltip text="Edit User Info">
+              <v-icon @click="editModal(item?._id)">mdi-pencil</v-icon>
+            </Tooltip>
+
+            <Tooltip text="Delete User">
+              <v-icon @click="openModal(item?._id)">mdi-trash-can-outline</v-icon>
+            </Tooltip>
+
+            <Tooltip text="Download PDF">
+              <v-icon @click="downloadPDF(item?._id)">mdi-download</v-icon>
+            </Tooltip>
           </div>
         </template>
       </Table>
@@ -657,6 +678,12 @@ const selectSectionHandler = async (item, userId) => {
   .content-btns {
     align-items: center;
     justify-content: center;
+  }
+}
+
+@media (max-width: 785px) {
+  .content {
+    flex-direction: row;
   }
 }
 

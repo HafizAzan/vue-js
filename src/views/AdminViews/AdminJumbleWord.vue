@@ -6,6 +6,7 @@ import Loader from '@/components/Loader.vue'
 import Modal from '@/components/Modal.vue'
 import Navigator from '@/components/Navigator.vue'
 import Textarea from '@/components/Textarea.vue'
+import Tooltip from '@/components/Tooltip.vue'
 import { ROUTES } from '@/router'
 import {
   adminAddJumbleWord,
@@ -83,8 +84,9 @@ const openModal = async () => {
   deleteModalOpen.value = form.id
 }
 
-const editable = async () => {
-  editId.value = form.id
+const editable = async (type) => {
+  if (type === 'close') editId.value = null
+  else if (type === 'edit') editId.value = form.id
 }
 
 const deleteQuestionHandler = async () => {
@@ -150,11 +152,17 @@ const handleSubmit = async () => {
 
     <main class="card-box">
       <v-form fast-fail @submit.prevent="handleSubmit" class="auth-form">
-        <div class="label-name">
+        <div class="label-name" v-if="form.id">
           <h2>{{ editId ? 'Update' : 'Add' }} Question</h2>
           <span class="icons">
-            <v-icon @click="editable">mdi-pencil</v-icon>
-            <v-icon @click="openModal">mdi-trash-can-outline</v-icon>
+            <Tooltip :text="editId ? 'Close Editable' : 'Editable'">
+              <v-icon v-if="editId" @click="editable('close')">mdi-check</v-icon>
+              <v-icon v-else @click="editable('edit')">mdi-pencil</v-icon>
+            </Tooltip>
+
+            <Tooltip text="Delete">
+              <v-icon @click="openModal">mdi-trash-can-outline</v-icon>
+            </Tooltip>
           </span>
         </div>
 
@@ -179,13 +187,15 @@ const handleSubmit = async () => {
         />
 
         <div class="btn-control">
-          <Button
-            type="submit"
-            :buttonText="editId ? 'Update' : 'Save'"
-            appendIcon="mdi-arrow-right"
-            :is-loading="isAddingLoader || isUpdatingLoader"
-            :disabled="isAddingLoader || isUpdatingLoader || (form.id && !editId)"
-          />
+          <Tooltip :disabled="form.id && !editId" :text="editId ? 'Update' : 'Save'">
+            <Button
+              type="submit"
+              :buttonText="editId ? 'Update' : 'Save'"
+              appendIcon="mdi-arrow-right"
+              :is-loading="isAddingLoader || isUpdatingLoader"
+              :disabled="isAddingLoader || isUpdatingLoader || (form.id && !editId)"
+            />
+          </Tooltip>
         </div>
       </v-form>
 

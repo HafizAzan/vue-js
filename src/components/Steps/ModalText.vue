@@ -1,10 +1,10 @@
-```vue
 <script setup>
-import { ref, reactive, computed, watch } from 'vue'
+import { reactive, computed, watch } from 'vue'
 import Button from '../Button.vue'
 import Textarea from '../Textarea.vue'
 import { VIcon } from 'vuetify/components'
 import { toast } from 'vue-sonner'
+import Tooltip from '../Tooltip.vue'
 
 const props = defineProps({
   modalConfig: {
@@ -98,16 +98,21 @@ const stepChange = () => {
             <h4 class="card-box-title">{{ single?.heading }}</h4>
           </div>
 
-          <v-icon
-            v-if="props.defaultModalTexts._id ? !editableFields[single.key] : false"
-            color="grey"
-            class="upload-icon"
-            @click="toggleEdit(single.key)"
+          <Tooltip
+            :text="
+              props.defaultModalTexts?._id && editableFields[single.key]
+                ? 'Close Editable'
+                : 'Editable'
+            "
           >
-            {{
-              props.defaultModalTexts._id && editableFields[single.key] ? 'mdi-check' : 'mdi-pencil'
-            }}
-          </v-icon>
+            <v-icon color="grey" class="upload-icon" @click="toggleEdit(single.key)">
+              {{
+                props.defaultModalTexts._id && editableFields[single.key]
+                  ? 'mdi-check'
+                  : 'mdi-pencil'
+              }}
+            </v-icon>
+          </Tooltip>
         </div>
 
         <div class="textarea-group">
@@ -121,17 +126,21 @@ const stepChange = () => {
         </div>
 
         <div class="next-btn">
-          <Button
-            button-text="Update"
-            v-if="editableFields[single.key]"
-            @click="updateModal(single)"
-          />
+          <Tooltip text="Update Field">
+            <Button
+              button-text="Update"
+              v-if="editableFields[single.key]"
+              @click="updateModal(single)"
+            />
+          </Tooltip>
         </div>
       </div>
     </div>
 
     <div class="next-btn">
-      <Button button-text="Next" :disabled="!isAllFieldsFilled" @click="stepChange" />
+      <Tooltip text="Next Step 02">
+        <Button button-text="Next" :disabled="!isAllFieldsFilled" @click="stepChange" />
+      </Tooltip>
     </div>
   </main>
 </template>
@@ -192,6 +201,13 @@ const stepChange = () => {
   color: #fff;
 }
 
+@media (max-width: 600px) {
+  .card-box-title {
+    font-size: 1rem !important;
+    line-height: 22px;
+  }
+}
+
 .textarea-group {
   display: flex;
   flex-direction: column;
@@ -206,4 +222,3 @@ const stepChange = () => {
   margin-top: 20px;
 }
 </style>
-```

@@ -5,6 +5,7 @@ import Input from '@/components/Input.vue'
 import Loader from '@/components/Loader.vue'
 import Modal from '@/components/Modal.vue'
 import Navigator from '@/components/Navigator.vue'
+import Tooltip from '@/components/Tooltip.vue'
 import { ROUTES } from '@/router'
 import {
   adminAddQuestion,
@@ -99,6 +100,15 @@ const cancle = () => {
   form.id = null
   form.question = null
 }
+
+watch(
+  () => form.question,
+  (newValue) => {
+    if (!newValue?.trim()) {
+      cancle()
+    }
+  },
+)
 </script>
 
 <template>
@@ -124,21 +134,25 @@ const cancle = () => {
         </div>
 
         <div class="btns">
-          <Button
-            type="submit"
-            :buttonText="form.id ? 'Update Question' : 'Add Question'"
-            appendIcon="mdi-arrow-right"
-            :is-loading="isAddingQuestion || isUpdatingQuestion"
-            :disabled="isAddingQuestion || isUpdatingQuestion"
-          />
+          <Tooltip :text="form.id ? 'Update the question' : 'Add the question'">
+            <Button
+              type="submit"
+              :buttonText="form.id ? 'Update Question' : 'Add Question'"
+              appendIcon="mdi-arrow-right"
+              :is-loading="isAddingQuestion || isUpdatingQuestion"
+              :disabled="isAddingQuestion || isUpdatingQuestion"
+            />
+          </Tooltip>
 
-          <Button
-            v-if="form.id"
-            @click="cancle"
-            type="button"
-            buttonText="Cancel"
-            appendIcon="mdi-arrow-right"
-          />
+          <Tooltip v-if="form.id" text="Remove Field Text">
+            <Button
+              v-if="form.id"
+              @click="cancle"
+              type="button"
+              buttonText="Cancel"
+              appendIcon="mdi-arrow-right"
+            />
+          </Tooltip>
         </div>
       </v-form>
 
@@ -153,10 +167,15 @@ const cancle = () => {
           <span>Question {{ idx + 1 }}</span>
           <div class="readonly-text">
             <p>{{ single?.questionText }}</p>
-            <span class="icons">
-              <v-icon @click="editPencil(single)">mdi-pencil</v-icon>
-              <v-icon @click="openDeleteModal(single)">mdi-trash-can-outline</v-icon>
-            </span>
+            <div class="icons">
+              <Tooltip text="Edit the question">
+                <v-icon @click="editPencil(single)">mdi-pencil</v-icon>
+              </Tooltip>
+
+              <Tooltip text="Delete the question">
+                <v-icon @click="openDeleteModal(single)">mdi-trash-can-outline</v-icon>
+              </Tooltip>
+            </div>
           </div>
         </div>
       </main>
@@ -219,6 +238,7 @@ const cancle = () => {
   margin-bottom: 15px;
   display: flex;
   justify-content: space-between;
+  position: relative;
 }
 
 .wrapper-text span {
@@ -234,6 +254,9 @@ const cancle = () => {
   display: inline-flex;
   gap: 10px;
   cursor: pointer;
+  position: absolute;
+  right: 5px;
+  background-color: #12121f;
 }
 
 .wrapper-text {
@@ -246,8 +269,8 @@ const cancle = () => {
 .main-wrapper-text {
   display: flex;
   flex-direction: column;
-  min-height: 400px;
-  max-height: 400px;
+  min-height: 340px;
+  max-height: 340px;
   overflow-y: auto;
   padding-right: 20px;
   margin-top: 20px;
@@ -258,5 +281,22 @@ const cancle = () => {
   align-items: center;
   gap: 20px;
   flex-wrap: wrap;
+}
+
+@media (max-width: 600px) {
+  .readonly-text p {
+    font-size: 16px !important;
+    min-width: 235px;
+    text-overflow: ellipsis;
+    overflow: hidden;
+  }
+
+  .wrapper-text {
+    padding-right: 10px;
+  }
+
+  .main-wrapper-text {
+    padding-right: 10px;
+  }
 }
 </style>
