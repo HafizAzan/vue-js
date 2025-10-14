@@ -118,7 +118,6 @@ const handleImageChange = async (event) => {
     }
   } catch (error) {
     toast.error('An error occurred during upload.')
-    console.error(error)
   } finally {
     if (fileInput.value) {
       fileInput.value.value = ''
@@ -158,7 +157,6 @@ const handleUploadImages = async () => {
       }
     } catch (error) {
       toast.error('Error during upload.')
-      console.error(error)
     } finally {
       if (fileInput.value) {
         fileInput.value.value = ''

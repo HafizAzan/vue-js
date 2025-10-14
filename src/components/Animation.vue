@@ -12,10 +12,11 @@ import Wood from './Flame/Wood.vue'
 const props = defineProps({
   level: [String, Number],
   element: [String, Number],
+  saveValue: [String, Number],
   isCandleOn: Boolean,
   isEnd: Boolean,
   arrayValues: Array,
-  saveValue: [String, Number],
+  modalTexts: [Object, Array],
 })
 
 const emit = defineEmits(['update:saveValue', 'update:isCandleOn'])
@@ -97,5 +98,10 @@ watch(candleValue, (newVal) => {
     v-model:is-candle-on="candleOn"
   />
 
-  <FireAudio :candle-on="candleOn" :stop-console="props.isEnd" :is-fading="saveValue" />
+  <FireAudio
+    :candle-on="candleOn"
+    :stop-console="props.isEnd"
+    :is-fading="saveValue"
+    :modelText="props.modalTexts"
+  />
 </template>

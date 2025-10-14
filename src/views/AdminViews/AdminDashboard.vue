@@ -462,7 +462,7 @@ const selectSectionHandler = async (item, userId) => {
         </template>
       </Table>
 
-      <Pagination v-model="page" :length="totalPages" :total-visible="3" rounded="circle" />
+      <Pagination v-model="page" :length="totalPages" :total-visible="5" rounded="circle" />
 
       <Modal
         v-model="openDialog"
@@ -692,5 +692,6 @@ const selectSectionHandler = async (item, userId) => {
   text-overflow: ellipsis;
   white-space: nowrap;
   width: 100%;
+  text-transform: capitalize;
 }
 </style>

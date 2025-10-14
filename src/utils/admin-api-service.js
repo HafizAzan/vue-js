@@ -46,8 +46,8 @@ const fetchAllModalConfig = async () => {
   return response.data
 }
 
-const fetchAllAgreement = async () => {
-  const response = await API.get(API_ROUTES.ADMIN.GET_AGREEMENT)
+const fetchAllAgreement = async (role) => {
+  const response = await API.get(`${API_ROUTES.ADMIN.GET_AGREEMENT}?role=${role}`)
   return response.data
 }
 

@@ -1,5 +1,5 @@
 <script setup>
-import { defineProps, watch } from 'vue'
+import { defineProps } from 'vue'
 
 const props = defineProps({
   items: {
@@ -14,10 +14,6 @@ const props = defineProps({
     type: String,
     default: 'Accordion',
   },
-})
-
-watch(props.items, (val) => {
-  console.log(val, 'val')
 })
 </script>
 

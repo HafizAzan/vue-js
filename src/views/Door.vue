@@ -1,5 +1,6 @@
 <script setup>
 import Button from '@/components/Button.vue'
+import Tooltip from '@/components/Tooltip.vue'
 import { ROUTES } from '@/router'
 import { usePlayStore } from '@/store/usePlayStore'
 import { useRoute, useRouter } from 'vue-router'
@@ -25,11 +26,13 @@ const navigate = () => {
       >Each Flame Holds a Clue <br />
       Enter Level 0{{ level ?? playStore.getLevel() }}</v-typography
     >
-    <Button
-      :buttonText="`Enter Level 0${level ?? playStore.getLevel()}`"
-      appendIcon="mdi-arrow-right"
-      @click="() => navigate()"
-    />
+    <Tooltip :text="`Next Step 0${level ?? playStore.getLevel()}`">
+      <Button
+        :buttonText="`Enter Level 0${level ?? playStore.getLevel()}`"
+        appendIcon="mdi-arrow-right"
+        @click="() => navigate()"
+      />
+    </Tooltip>
   </main>
 </template>
 

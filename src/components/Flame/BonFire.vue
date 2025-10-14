@@ -28,8 +28,6 @@ const startFlameAnimation = (value) => {
   values.value = value
   emit('update:values', value)
 
-  console.log(value, 'val')
-
   if (!flame.value) return
 
   const safeValue = Math.max(0.4, Math.min(1.2, value))

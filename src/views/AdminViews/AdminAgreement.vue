@@ -27,7 +27,7 @@ const {
   refetch: refetchGetAgreement,
 } = useQuery({
   queryKey: ['get-agreement'],
-  queryFn: fetchAllAgreement,
+  queryFn: () => fetchAllAgreement('web'),
 })
 
 const { mutateAsync: addAgreementText, isPending: isAddingText } = useMutation({

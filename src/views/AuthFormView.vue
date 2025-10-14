@@ -147,7 +147,7 @@ const handleSubmit = async () => {
 </script>
 
 <template>
-  <v-sheet class="main-form-wrapper" width="600" height="700">
+  <v-sheet class="main-form-wrapper" height="700">
     <div v-if="!isLogin && (isValueLoading || isAllUsersLoading)">
       <Loader />
     </div>
@@ -157,7 +157,7 @@ const handleSubmit = async () => {
         isLogin ? 'Login' : 'Sign up'
       }}</v-typography>
 
-      <v-typography v-if="isLogin" variants="h6" class="text-h6 h6 form-text"
+      <v-typography v-if="isLogin" variants="h6" class="text-sm-h6 h6 form-text"
         >Enter an anonymous username
       </v-typography>
 
@@ -188,12 +188,12 @@ const handleSubmit = async () => {
         :isLoading="isPending"
       />
 
-      <v-typography v-if="isLogin" variants="h6" class="text-h6 h6"
+      <v-typography v-if="isLogin" variants="h6" class="text-sm-h6 h6"
         >Don't Have an account?
         <RouterLink to="/signup">Signup</RouterLink>
       </v-typography>
 
-      <v-typography v-else variants="h6" class="text-h6 h6"
+      <v-typography v-else variants="h6" class="text-sm-h6 h6"
         >Have an account?
         <RouterLink to="/login">Login</RouterLink>
       </v-typography>
@@ -221,7 +221,7 @@ const handleSubmit = async () => {
   display: flex;
   justify-content: center;
   align-items: center;
-  width: 100%;
+  width: 600px;
   height: 75%;
   background-color: #000000d2;
   padding: 10px;
@@ -230,6 +230,12 @@ const handleSubmit = async () => {
   gap: 20px;
   border-radius: 10px;
   border: 1px solid orange;
+}
+
+@media (max-width: 612px) {
+  .auth-form {
+    width: 90%;
+  }
 }
 
 .form-text {

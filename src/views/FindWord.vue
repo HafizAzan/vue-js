@@ -118,6 +118,7 @@ const {
 } = useQuery({
   queryKey: ['get-all-models'],
   queryFn: fetchAllModalConfig,
+  refetchOnMount: true,
 })
 
 // computed
@@ -237,6 +238,7 @@ const fetchModalData = () => {
   }
 }
 
+watchEffect(() => fetchModalData())
 watch(getAllModal, fetchModalData)
 onMounted(fetchModalData)
 
@@ -499,21 +501,25 @@ const autoSubmit = async (currentSection = null) => {
 
 const getBlur = () => {
   const candleOn = computed(() => animationActive.value)
-  const isFading = computed(() => saveValue.value)
+  const fadeValue = computed(() => saveValue.value)
+  let blurAmount
 
-  if (!candleOn.value) {
-    return { filter: `blur(3px)`, opacity: 0, userSelect: 'text' }
+  if (!candleOn.value)
+    return {
+      display: 'none',
+    }
+
+  if (fadeValue.value <= 0.2) {
+    blurAmount = defaultModalTexts?.opacityLow ?? 1.8
+  } else if (fadeValue.value <= 0.5) {
+    blurAmount = defaultModalTexts?.opacityMedium ?? 3
+  } else {
+    blurAmount = defaultModalTexts?.opacityHigh ?? 5
   }
 
-  const brightness = typeof isFading.value === 'number' ? isFading.value : 1
-  const clamped = Math.max(0, Math.min(1, brightness))
-
-  const baseBlur = 3
-  const blurAmount = baseBlur + clamped * 4
-
   return {
-    filter: `blur(${blurAmount.toFixed(2)}px)`,
-    opacity: (0.9 - clamped * 0.1).toFixed(2),
+    filter: `blur(${blurAmount}px)`,
+    opacity: 0.9,
     userSelect: 'none',
     pointerEvents: 'none',
   }
@@ -645,6 +651,7 @@ const level = playAgainLevel ?? playStore.getLevel()
             :array-values="controllValues.values"
             v-model:saveValue="saveValue"
             :is-end="isEnd"
+            :modal-texts="defaultModalTexts"
           />
 
           <p

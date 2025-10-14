@@ -16,7 +16,7 @@ const agreementId = ref(null)
 
 const { data: getAgreement, isLoading: isLoadAgreement } = useQuery({
   queryKey: ['get-agreement'],
-  queryFn: fetchAllAgreement,
+  queryFn: () => fetchAllAgreement('web'),
 })
 
 const goToLeaderboard = () => {
@@ -55,7 +55,7 @@ const agreementHandler = () => {
 <template>
   <main class="main-home-content">
     <Loader v-if="isLoadAgreement" color="white" />
-    <v-typography variants="h2" class="text-h2 h2">Noetic Adventure</v-typography>
+    <v-typography variants="h2" class="text-sm-h2 text-h4 h2">Noetic Adventure</v-typography>
     <Button buttonText="Get Started" @click="goToLeaderboard" appendIcon="mdi-arrow-right" />
     <Modal
       v-model="modalOpen"
@@ -63,7 +63,6 @@ const agreementHandler = () => {
       agree-text="Yes"
       disagree-text="No"
       @agree="agreementHandler"
-      @disagree="console.log('Disagreed!')"
       max-width="800"
     >
       <div class="modal-preview" v-html="agreement" :style="modalStyle"></div>

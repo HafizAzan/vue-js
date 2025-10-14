@@ -18,7 +18,6 @@ const useFlameAnimation = ({
   })
 
   const applyFlameState = (value) => {
-    console.log(value, 'values from hook')
     startFlameAnimation(value)
     if (!flameOn.value) {
       clearTimeout(updateTimer.value)

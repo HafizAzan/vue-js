@@ -73,7 +73,7 @@ const { data: getSessionWord } = useQuery({
 })
 
 const { data: allPlayLevel } = useQuery({
-  queryKey: 'filter-all-play-level',
+  queryKey: ['filter-all-play-level'],
   queryFn: fetchAllPlayLevels,
 })
 
@@ -120,7 +120,7 @@ const FilteredLevels = computed(() => {
 })
 
 const playAgainLevels = computed(() => {
-  return Array.from({ length: playStore.getLevel() }).map((_, index) => ({
+  return Array.from({ length: playStore.getLevel() - 1 }).map((_, index) => ({
     level: `Level ${index + 1}`,
     title: `Level 0${index + 1}`,
   }))
@@ -215,8 +215,8 @@ const ButtonText = () => {
   const isLastLevel = currentLevel > 7
   const isComplete = isCompleteSession.value
   if (isComplete && isLastLevel) return 'Finish'
-  if (isComplete) return 'Play Next'
   if (!findMinimumOnePlay) return 'Play'
+  if (isComplete) return 'Play Next'
   return 'Resume'
 }
 </script>
@@ -227,7 +227,7 @@ const ButtonText = () => {
       <v-typography variants="h3" class="text-h3 h3">Leaderboard</v-typography>
 
       <main class="content-btns">
-        <Tooltip text="Play Next">
+        <Tooltip :text="ButtonText()">
           <Button
             :buttonText="ButtonText()"
             @click="() => gamePlay('play-next')"
@@ -251,7 +251,6 @@ const ButtonText = () => {
           agree-text="Yes"
           disagree-text="No"
           @agree="() => gamePlay('leave')"
-          @disagree="console.log('Disagreed!')"
           tooltip-text="leave"
           button-text="Leave"
           max-width="450"
@@ -277,7 +276,7 @@ const ButtonText = () => {
     <div v-else class="main-content-table">
       <Table :headers="headers" :items="leaderboardItems">
         <template #item.userName="{ item }">
-          <div>
+          <div class="ellipsis">
             <span>
               {{ item.userId === token?._id ? 'You' : item.userName }}
             </span>
@@ -287,7 +286,7 @@ const ButtonText = () => {
         <template #item.levelsCompleted="{ item }">
           <div>
             <span>
-              {{ item.levelsCompleted?.[item.levelsCompleted.length - 1] ?? item.level ?? '-' }}
+              0{{ item.levelsCompleted?.[item.levelsCompleted.length - 1] ?? item.level ?? '-' }}
             </span>
           </div>
         </template>
@@ -329,12 +328,26 @@ const ButtonText = () => {
   padding-bottom: 10px;
 }
 
+.ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: 100%;
+  text-transform: capitalize;
+}
+
 /* Media Query */
 @media (max-width: 400px) {
   .content,
   .content-btns {
     align-items: center;
     justify-content: center;
+  }
+}
+
+@media (max-width: 785px) {
+  .content {
+    flex-direction: column !important;
   }
 }
 </style>
