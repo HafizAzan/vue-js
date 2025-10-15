@@ -98,8 +98,8 @@ const adminUpdateTime = async (body) => {
   return response.data
 }
 
-const adminUpdateAgreement = async ({ id, body }) => {
-  const response = await API.patch(`${API_ROUTES.ADMIN.PATCH_AGREEMENT?.replace(':id', id)}`, body)
+const adminUpdateAgreement = async ({ body }) => {
+  const response = await API.patch(`${API_ROUTES.ADMIN.PATCH_AGREEMENT}`, body)
   return response.data
 }
 
@@ -175,6 +175,11 @@ const deleteWordById = async (jumbleId) => {
   return response.data
 }
 
+const deleteAllValue = async () => {
+  const response = await API.delete(`${API_ROUTES.DELETE_ALL_VALUE}`)
+  return response.data
+}
+
 export {
   fetchAllUser,
   fetchUserId,
@@ -206,4 +211,5 @@ export {
   deleteQuestionById,
   deleteWordById,
   deleteAgreementById,
+  deleteAllValue,
 }

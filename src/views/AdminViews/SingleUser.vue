@@ -184,7 +184,7 @@ const playDataItems = computed(() => {
   padding: 8px 15px;
   font-size: 16px;
   letter-spacing: 0.03em;
-  cursor: not-allowed; /* show that input is readonly */
+  cursor: not-allowed;
   box-shadow: none !important;
   transition: border-color 0.25s ease;
 }
@@ -193,5 +193,28 @@ const playDataItems = computed(() => {
   outline: none;
   border-color: #6c5ce7;
   box-shadow: 0 0 8px #6c5ce7;
+}
+
+@media (max-width: 600px) {
+  .disabled-form,
+  .disabled-form-row {
+    padding: 10px;
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+
+  .user-title {
+    font-size: 16px;
+  }
+
+  :deep(.v-expansion-panel-text__wrapper) {
+    padding: 5px 20px;
+  }
+}
+
+@media (max-width: 410px) {
+  .text-h3 {
+    font-size: 1.5rem !important;
+  }
 }
 </style>

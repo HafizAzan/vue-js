@@ -246,8 +246,10 @@ const isAllFilled = computed(() => {
 }
 
 .hidden-word {
-  font-size: 4vw;
+  font-size: 1.2rem;
   transition: filter 0.3s ease;
+  font-family: Montserrat;
+  font-weight: 500;
 }
 
 .icons-wrapper {
@@ -268,5 +270,13 @@ const isAllFilled = computed(() => {
   justify-content: flex-end;
   width: 100%;
   margin-top: 20px;
+}
+
+@media (max-width: 600px) {
+  .slider-group,
+  .card-box,
+  .card-box-wrapper {
+    padding: 10px;
+  }
 }
 </style>

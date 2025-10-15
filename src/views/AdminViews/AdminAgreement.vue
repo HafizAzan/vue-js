@@ -1,7 +1,7 @@
 <script setup>
 import Navigator from '@/components/Navigator.vue'
 import JoditEditor from '@/components/JoditEditor.vue'
-import { onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import Button from '@/components/Button.vue'
 import Tooltip from '@/components/Tooltip.vue'
 import { useMutation, useQuery } from '@tanstack/vue-query'
@@ -17,17 +17,21 @@ import Modal from '@/components/Modal.vue'
 
 const agreement = ref('')
 const agreementId = ref(null)
+const openPreviewModal = ref(null)
 const previewModal = ref(false)
 const deleteModal = ref(false)
 const joditKey = ref(Date.now())
+const activeRole = ref('web')
+const editModalOpen = ref(null)
 
 const {
   data: getAgreement,
   isLoading: isLoadAgreement,
+  isFetching: isFetchingAgreement,
   refetch: refetchGetAgreement,
 } = useQuery({
-  queryKey: ['get-agreement'],
-  queryFn: () => fetchAllAgreement('web'),
+  queryKey: ['get-agreement', activeRole.value],
+  queryFn: () => fetchAllAgreement(activeRole.value),
 })
 
 const { mutateAsync: addAgreementText, isPending: isAddingText } = useMutation({
@@ -37,7 +41,7 @@ const { mutateAsync: addAgreementText, isPending: isAddingText } = useMutation({
 
 const { mutateAsync: updateAgreementText, isPending: isUpdatingText } = useMutation({
   mutationKey: ['update-agreement'],
-  mutationFn: ({ id, body }) => adminUpdateAgreement({ id, body }),
+  mutationFn: ({ body }) => adminUpdateAgreement({ body }),
 })
 
 const { mutateAsync: deleteAgreementText, isPending: isDeletingText } = useMutation({
@@ -45,8 +49,11 @@ const { mutateAsync: deleteAgreementText, isPending: isDeletingText } = useMutat
   mutationFn: (id) => deleteAgreementById(id),
 })
 
-const handleSubmit = async () => {
-  const response = await addAgreementText({ agreementText: agreement.value })
+const handleSubmit = async (type) => {
+  const response = await addAgreementText({
+    agreementText: agreement.value,
+    agreementRole: 'web' || type,
+  })
   if (response?.error) {
     toast.error(response?.error?.message || 'Failed To Submit Please Try Again!')
   } else {
@@ -68,10 +75,10 @@ const deleteAgreement = async () => {
   }
 }
 
-const updateAgreementHandler = async () => {
+const updateAgreementHandler = async (type) => {
+  editModalOpen.value = false
   const res = await updateAgreementText({
-    id: agreementId.value,
-    body: { agreementText: agreement.value },
+    body: { agreementText: agreement.value, agreementRole: type },
   })
 
   if (res?.error) {
@@ -85,8 +92,8 @@ const updateAgreementHandler = async () => {
 const updateAgreementState = () => {
   const data = getAgreement?.value?.[0]
   if (data) {
-    agreement.value = data.agreementText
-    agreementId.value = data._id
+    agreement.value = data?.agreementText
+    agreementId.value = data?._id
   } else {
     agreement.value = ''
     agreementId.value = null
@@ -97,6 +104,19 @@ watch(getAgreement, updateAgreementState)
 onMounted(updateAgreementState)
 
 const previewModalHandler = () => (previewModal.value = true)
+
+const viewHandler = async (type) => {
+  previewModal.value = false
+  openPreviewModal.value = type
+  activeRole.value = type
+  await refetchGetAgreement()
+}
+
+const previewModalWidth = computed(() => {
+  if (openPreviewModal.value === 'mobile') return 500
+  if (openPreviewModal.value === 'web') return 800
+  return 0
+})
 
 const modalStyle = {
   padding: '15px',
@@ -130,20 +150,20 @@ const modalStyle = {
           </Tooltip>
 
           <Tooltip text="Update">
-            <v-icon color="white" size="40" class="upload-icon" @click="updateAgreementHandler">
+            <v-icon color="white" size="40" class="upload-icon" @click="editModalOpen = true">
               mdi-pencil-circle
             </v-icon>
           </Tooltip>
 
-          <Tooltip text="Delete">
+          <!-- <Tooltip text="Delete">
             <v-icon color="white" size="40" class="upload-icon" @click="deleteModal = true">
               mdi-delete-circle
             </v-icon>
-          </Tooltip>
+          </Tooltip> -->
         </div>
       </div>
 
-      <v-form fast-fail @submit.prevent="handleSubmit" class="auth-form">
+      <v-form fast-fail @submit.prevent="handleSubmit('web')" class="auth-form">
         <JoditEditor v-model="agreement" :key="joditKey" />
 
         <div class="main-btn-wrapper" v-if="!agreementId" :key="joditKey">
@@ -153,18 +173,64 @@ const modalStyle = {
 
       <Modal
         v-model="previewModal"
-        max-width="800"
+        max-width="450"
         :close-on-outside-click="true"
         :showActions="false"
       >
         <template #prependIcon>
           <div class="preview-icon">
+            <h2>Agreement Preview</h2>
             <v-icon size="40" @click="previewModal = false" color="white">
+              mdi-window-close
+            </v-icon>
+          </div>
+
+          <div class="btn-wrraper">
+            <Button button-text="Web View" type="button" @click="viewHandler('web')" />
+            <Button button-text="Mobile View" type="button" @click="viewHandler('mobile')" />
+          </div>
+        </template>
+      </Modal>
+
+      <Loader v-if="isFetchingAgreement" />
+
+      <Modal
+        v-else
+        v-model="openPreviewModal"
+        :max-width="previewModalWidth"
+        :close-on-outside-click="true"
+        :showActions="false"
+      >
+        <template #prependIcon>
+          <div class="view-icon">
+            <v-icon size="40" @click="openPreviewModal = null" color="white">
               mdi-window-close
             </v-icon>
           </div>
         </template>
         <div class="modal-preview" v-html="agreement" :style="modalStyle"></div>
+      </Modal>
+
+      <Modal
+        v-model="editModalOpen"
+        max-width="450"
+        :close-on-outside-click="true"
+        :showActions="false"
+      >
+        <template #prependIcon>
+          <div class="preview-icon">
+            <h2>Update Agreement</h2>
+            <v-icon size="40" @click="editModalOpen = false" color="white">
+              mdi-window-close
+            </v-icon>
+          </div>
+
+          <div class="btn-wrraper-main">
+            <Button button-text="Web" type="button" @click="updateAgreementHandler('web')" />
+            <Button button-text="Mobile" type="button" @click="updateAgreementHandler('mobile')" />
+            <Button button-text="Both" type="button" @click="updateAgreementHandler('both')" />
+          </div>
+        </template>
       </Modal>
 
       <Modal
@@ -242,18 +308,10 @@ const modalStyle = {
   color: #fff;
 }
 
-@media (max-width: 600px) {
-  .card-box-title {
-    font-size: 1.4rem !important;
-    font-weight: 400 !important;
-    color: #fff;
-  }
-}
-
 .wrapper-icons {
   display: inline-flex;
   align-items: center;
-  gap: 18px;
+  gap: 5px;
 }
 
 .auth-form {
@@ -272,12 +330,63 @@ const modalStyle = {
 
 .preview-icon {
   display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  width: 95%;
+  padding-top: 10px;
+  text-transform: capitalize;
+}
+
+.view-icon {
+  display: flex;
   justify-content: end;
   cursor: pointer;
   width: 95%;
   padding-top: 10px;
-  /* position: absolute;
-  right: 30px;
-  top: 40px; */
+}
+
+.preview-icon h2 {
+  font-size: 35px;
+  font-weight: 600;
+}
+
+.btn-wrraper {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding-top: 30px;
+}
+
+.btn-wrraper-main {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding-top: 30px;
+}
+
+@media (max-width: 410px) {
+  .wrapper-icons {
+    gap: 0px;
+  }
+
+  .wrapper-icons i {
+    font-size: 30px !important;
+  }
+}
+
+@media (max-width: 785px) {
+  .content {
+    flex-direction: row !important;
+  }
+}
+
+@media (max-width: 600px) {
+  .card-box-title {
+    font-size: 1.4rem !important;
+    font-weight: 400 !important;
+    color: #fff;
+  }
 }
 </style>

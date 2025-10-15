@@ -274,4 +274,11 @@ const handleSubmit = async () => {
 .label-name h2 {
   font-size: 1.7rem;
 }
+
+@media (max-width: 600px) {
+  .auth-form {
+    padding: 10px;
+    gap: 10px;
+  }
+}
 </style>

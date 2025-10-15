@@ -2,6 +2,7 @@
 import Button from '@/components/Button.vue'
 import Loader from '@/components/Loader.vue'
 import Modal from '@/components/Modal.vue'
+import { ROUTES } from '@/router'
 import { useUserStore } from '@/store/useUserStore'
 import { fetchAllAgreement } from '@/utils/admin-api-service'
 import { useQuery } from '@tanstack/vue-query'
@@ -48,7 +49,7 @@ const modalStyle = {
 
 const agreementHandler = () => {
   setIsFirstTime(true)
-  router.push('/signup')
+  router.push(ROUTES.REGISTER)
 }
 </script>
 
