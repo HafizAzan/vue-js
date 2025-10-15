@@ -2,8 +2,10 @@
 import { ref } from 'vue'
 import Tooltip from './Tooltip.vue'
 import { toast } from 'vue-sonner'
-import { adminAddValues } from '@/utils/admin-api-service'
+import { adminAddValues, deleteAllValue } from '@/utils/admin-api-service'
 import { useMutation } from '@tanstack/vue-query'
+import Modal from './Modal.vue'
+import Button from './Button.vue'
 
 const props = defineProps({
   refetch: {
@@ -14,6 +16,7 @@ const props = defineProps({
 
 const fileInputRef = ref(null)
 const isUploading = ref(false)
+const assignArrayModal = ref(false)
 const progress = ref(0)
 
 const { mutateAsync: addValues } = useMutation({
@@ -21,10 +24,35 @@ const { mutateAsync: addValues } = useMutation({
   mutationFn: ({ formData, config }) => adminAddValues(formData, config),
 })
 
+const { mutateAsync: deleteAllValues, isPending: isDeleting } = useMutation({
+  mutationKey: ['delete-all-values'],
+  mutationFn: () => deleteAllValue(),
+})
+
 const triggerFileInput = () => {
   if (!isUploading.value) {
     fileInputRef.value.value = ''
     fileInputRef.value.click()
+  }
+  assignArrayModal.value = false
+}
+
+const deleteArrayHandler = async () => {
+  const res = await deleteAllValues()
+  const num = ['1', '2', '3', '4', '5', '6', '7', '8', '9']
+  assignArrayModal.value = false
+
+  if (res?.error) {
+    toast.error(res?.error?.message || res?.error?.data?.message || 'Failed To Delete All Values')
+  } else {
+    const message = String(res?.data?.message || res?.message).trim()
+    const anyNumberFound = num.some((val) => message.includes(val))
+    if (!anyNumberFound && message.includes(0)) {
+      toast.error(message || 'No Items Deleted')
+    } else {
+      toast.success(message || 'Items Deleted SuccessFully')
+    }
+    await refetch()
   }
 }
 
@@ -99,7 +127,7 @@ const handleFileChange = async (e) => {
 
     <Tooltip text="Upload Array">
       <v-icon
-        @click="triggerFileInput"
+        @click="assignArrayModal = true"
         :class="{ 'icon-disabled': isUploading }"
         class="upload-icon"
       >
@@ -126,6 +154,26 @@ const handleFileChange = async (e) => {
         <p class="progress-percent">{{ progress }}%</p>
       </div>
     </div>
+
+    <Modal v-model="assignArrayModal" max-width="500" :showActions="false">
+      <template #title>
+        <v-icon size="70" class="modal-upload-icon">mdi-file-upload</v-icon>
+        <p class="modal-main-title">
+          Do you want to upload a new array or delete all existing data?
+        </p>
+
+        <div class="main-btn-wrapper">
+          <Button button-text="Upload Array" type="button" @click="triggerFileInput" />
+          <Button
+            button-text="Delete All Array"
+            type="button"
+            @click="deleteArrayHandler"
+            :is-loading="isDeleting"
+            :disabled="isDeleting"
+          />
+        </div>
+      </template>
+    </Modal>
   </div>
 </template>
 
@@ -136,6 +184,11 @@ const handleFileChange = async (e) => {
   padding: 10px;
   transition: opacity 0.2s ease;
 }
+
+.upload-icon:hover {
+  transform: scale(1) !important;
+}
+
 .icon-disabled {
   opacity: 0.5;
   pointer-events: none;
@@ -176,5 +229,36 @@ const handleFileChange = async (e) => {
 .progress-bar {
   transition: width 0.3s linear !important;
 }
+
+.modal-main-title {
+  font-size: 20px !important;
+  font-weight: 400;
+  padding: 0px 10px;
+  padding-top: 10px;
+  text-align: center;
+}
+
+.main-btn-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  padding-top: 16px;
+  gap: 10px;
+}
+
+.modal-upload-icon {
+  padding-top: 20px;
+  padding-bottom: 10px;
+}
+
+:deep(.v-card-text) {
+  padding: 0.3rem !important;
+}
+
+@media (max-width: 420px) {
+  .upload-icon {
+    font-size: 2rem;
+  }
+}
 </style>
-```

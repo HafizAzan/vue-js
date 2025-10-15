@@ -112,6 +112,14 @@ const logout = () => {
   padding: 10px;
 }
 
+@media (max-width: 420px) {
+  .icon .v-icon {
+    font-size: 2.3rem !important;
+    cursor: pointer;
+    padding: 10px;
+  }
+}
+
 .navigator {
   background-color: #000000f0;
   border: 1px solid orange;

@@ -363,4 +363,12 @@ const stepChange = () => {
 .no-audio .v-icon {
   cursor: pointer;
 }
+
+@media (max-width: 600px) {
+  .slider-group,
+  .card-box,
+  .card-box-wrapper {
+    padding: 10px;
+  }
+}
 </style>

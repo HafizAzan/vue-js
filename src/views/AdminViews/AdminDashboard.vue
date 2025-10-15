@@ -673,6 +673,18 @@ const selectSectionHandler = async (item, userId) => {
 }
 
 /* Media Query */
+@media (max-width: 500px) {
+  .sub-header {
+    padding: 10px;
+  }
+}
+
+@media (max-width: 420px) {
+  .nav-icon .v-icon {
+    font-size: 2rem;
+  }
+}
+
 @media (max-width: 400px) {
   .content,
   .content-btns {

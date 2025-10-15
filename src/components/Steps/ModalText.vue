@@ -206,6 +206,11 @@ const stepChange = () => {
     font-size: 1rem !important;
     line-height: 22px;
   }
+
+  .card-box,
+  .card-box-wrapper {
+    padding: 10px !important;
+  }
 }
 
 .textarea-group {

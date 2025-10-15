@@ -16,18 +16,25 @@ import findWordSeven from '@/assets/images/level-07.jpg'
 import music from '@/assets/music/music.mp3'
 import { fetchAllBgImg } from '@/utils/admin-api-service'
 import { useQuery } from '@tanstack/vue-query'
+import { fetchAllValues } from '@/utils/api-service'
 
 const route = useRoute()
 const playStore = usePlayStore()
 
-const {
-  data: getAllImages,
-  isLoading: isGettingImages,
-  refetch: refetchAllImages,
-} = useQuery({
+const { data: getAllImages } = useQuery({
   queryKey: ['fetch-bg-img'],
   queryFn: fetchAllBgImg,
 })
+
+const { data: allValues, isLoading: isValueLoading } = useQuery({
+  queryKey: ['get-values'],
+  queryFn: fetchAllValues,
+})
+
+const items = computed(() => allValues.value?.data?.A)
+const isItemsAvailable =
+  Array.isArray(items.value) &&
+  items.value.every((item) => !Array.isArray(item.items) || item?.items?.length === 0)
 
 const levelBackgrounds = {
   1: findWordOne,
@@ -127,6 +134,11 @@ onUnmounted(() => {
 
 <template>
   <div class="layout" :style="layoutStyle">
+    <div class="top-bar" v-if="isItemsAvailable">
+      <v-icon size="40">mdi-alert-outline</v-icon>
+      <span> Array Not Found </span>
+    </div>
+
     <div class="animation-brightness"></div>
     <div class="layout-wrapper">
       <Header />
@@ -193,5 +205,22 @@ onUnmounted(() => {
     background: rgba(0, 0, 0, 0.6);
     filter: brightness(1.1);
   }
+}
+
+.top-bar {
+  background-color: red;
+  min-width: 100%;
+  max-width: 100%;
+  padding: 10px 0px;
+  position: static;
+  top: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 30px;
+  color: white;
+  font-weight: 700;
+  opacity: 1;
+  gap: 10px;
 }
 </style>

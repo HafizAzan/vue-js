@@ -18,6 +18,7 @@ export const API_ROUTES = {
   VALUES: '/api/array/items',
   GET_VALUE_BY_ID: `/api/array/items/:itemId`,
   DELETE_VALUE: `/api/array/item-delete/:itemId`,
+  DELETE_ALL_VALUE: `/api/array/item-delete`,
 
   ADMIN: {
     PROFILE: `/api/admin/admin-data`,
@@ -58,7 +59,7 @@ export const API_ROUTES = {
 
     POST_AGREEMENT: '/api/admin/agreement',
     GET_AGREEMENT: '/api/admin/agreement',
-    PATCH_AGREEMENT: '/api/admin/agreement/:id',
+    PATCH_AGREEMENT: '/api/admin/agreement',
     DELETE_AGREEMENT: '/api/admin/agreement/:id',
   },
 }
